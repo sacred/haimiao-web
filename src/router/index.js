@@ -144,7 +144,7 @@ export const asyncRouterMap = [
   {
     path: '/oms',
     component: Layout,
-    redirect: '/oms/order',
+    redirect: '/oms/custOrder',
     name: 'oms',
     meta: {title: '订单', icon: 'order'},
     children: [
@@ -153,6 +153,26 @@ export const asyncRouterMap = [
         name: 'order',
         component: () => import('@/views/oms/order/index'),
         meta: {title: '订单列表', icon: 'product-list'}
+      },
+      {
+        path: 'custOrder',
+        name: 'custOrder',
+        component: () => import('@/views/oms/custOrder/index'),
+        meta: {title: '客户订单列表', icon: 'product-list'}
+      },
+      {
+        path: 'addCustOrder',
+        name: 'addCustOrder',
+        component: () => import('@/views/oms/custOrder/add'),
+        meta: {title: '客户下单'},
+        hidden:true
+      },
+      {
+        path: 'updateCustOrder',
+        name: 'updateCustOrder',
+        component: () => import('@/views/oms/custOrder/update'),
+        meta: {title: '客户订单修改'},
+        hidden:true
       },
       {
         path: 'orderDetail',
@@ -367,7 +387,27 @@ export const asyncRouterMap = [
         component: () => import('@/views/ums/resource/categoryList'),
         meta: {title: '资源分类'},
         hidden: true
-      }
+      },
+      {
+        path: 'sys',
+        name: 'sys',
+        component: () => import('@/views/ums/sys/index'),
+        meta: {title: '通用数据', icon: 'product-cate'}
+      },
+      {
+        path: 'addSys',
+        name: 'addSys',
+        component: () => import('@/views/ums/sys/add'),
+        meta: {title: '新增通用数据'},
+        hidden:true
+      },
+      {
+        path: 'updateSys',
+        name: 'updateSys',
+        component: () => import('@/views/ums/sys/update'),
+        meta: {title: '通用数据修改'},
+        hidden:true
+      },
     ]
   },
   {path: '*', redirect: '/404', hidden: true}
