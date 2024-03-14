@@ -217,7 +217,7 @@ export default {
   },
   mounted() {
     this.getList();
-    this.getOptions();
+    this.fetchOptions();
   },
   filters: {
     formatDate(time) {
@@ -274,7 +274,7 @@ export default {
         this.total = response.data.total;
       });
     },
-    getOptions() {
+    fetchOptions() {
       fetchOptions("LOCAL_CUST").then(response => {
         this.localCustOptions = response.data;
       });
