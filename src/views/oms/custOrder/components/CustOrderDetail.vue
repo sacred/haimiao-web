@@ -221,19 +221,19 @@ import {formatDate} from '@/utils/date';
         this.custOrder = Object.assign({},defaultCustOrder);
       },
       getOptions() {
-        fetchOptions("LOCAL_CUST").then(response => {
+        fetchOptions({"enumType": "LOCAL_CUST"}).then(response => {
           this.localCustOptions = response.data;
         });
-        fetchOptions("HK_CUST").then(response => {
+        fetchOptions({"enumType": "HK_CUST"}).then(response => {
           this.hkCustOptions = response.data;
         });
-        fetchOptions("GOOD_TYPE").then(response => {
+        fetchOptions({"enumType": "GOOD_TYPE"}).then(response => {
           this.goodTypeOptions = response.data;
         });
-        fetchOptions("ORDER_STATE").then(response => {
+        fetchOptions({"enumType": "ORDER_STATE"}).then(response => {
           this.stateOptions = response.data;
         });
-        fetchOptions("PACKING_TYPE").then(response => {
+        fetchOptions({"enumType": "PACKING_TYPE"}).then(response => {
           this.packingTypeOptions = response.data;
         });
       },

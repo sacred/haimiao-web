@@ -1,15 +1,25 @@
 import request from '@/utils/request'
 
-export function fetchOptions(enumType) {
+export function listOptions(param) {
     return request({
-        url:'/sysEnum/list/' + enumType,
-        method:'get'
+        url:'/sysEnum/list',
+        method:'get',
+        params: param
     })
 }
 
-export function getOption(enumType, param) {
+export function fetchOptions(param) {
+    param.state = 1;
     return request({
-        url:'/sysEnum/getByCode/' + enumType,
+        url:'/sysEnum/list',
+        method:'get',
+        params: param
+    })
+}
+
+export function getOption(param) {
+    return request({
+        url:'/sysEnum/getByCode',
         method:'get',
         param: param
     })

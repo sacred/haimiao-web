@@ -393,21 +393,7 @@ export const asyncRouterMap = [
         name: 'sys',
         component: () => import('@/views/ums/sys/index'),
         meta: {title: '通用数据', icon: 'product-cate'}
-      },
-      {
-        path: 'addSys',
-        name: 'addSys',
-        component: () => import('@/views/ums/sys/add'),
-        meta: {title: '新增通用数据'},
-        hidden:true
-      },
-      {
-        path: 'updateSys',
-        name: 'updateSys',
-        component: () => import('@/views/ums/sys/update'),
-        meta: {title: '通用数据修改'},
-        hidden:true
-      },
+      }
     ]
   },
   {path: '*', redirect: '/404', hidden: true}

@@ -87,12 +87,6 @@
         <el-table-column label="订单编号" width="180" align="center">
           <template slot-scope="scope">{{ scope.row.custOrderNo }}</template>
         </el-table-column>
-        <el-table-column label="下单日期" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.orderDate | formatDate }}</template>
-        </el-table-column>
-        <el-table-column label="提交时间" width="180" align="center">
-          <template slot-scope="scope">{{ scope.row.createTime | formatCreateTime }}</template>
-        </el-table-column>
         <el-table-column label="内地客户" width="120" align="center">
           <template slot-scope="scope">{{ scope.row.localCust }}</template>
         </el-table-column>
@@ -125,6 +119,12 @@
         </el-table-column>
         <el-table-column label="尾数2重量(Kg)" width="120" align="center">
           <template slot-scope="scope">{{ scope.row.additionWeight2 }}</template>
+        </el-table-column>
+        <el-table-column label="下单日期" width="120" align="center">
+          <template slot-scope="scope">{{ scope.row.orderDate | formatDate }}</template>
+        </el-table-column>
+        <el-table-column label="提交时间" width="180" align="center">
+          <template slot-scope="scope">{{ scope.row.createTime | formatCreateTime }}</template>
         </el-table-column>
         <el-table-column label="订单状态" width="120" align="center">
           <template slot-scope="scope">{{ scope.row.state | formatOptionData(stateOptions) }}</template>
@@ -275,19 +275,19 @@ export default {
       });
     },
     fetchOptions() {
-      fetchOptions("LOCAL_CUST").then(response => {
+      fetchOptions({"enumType": "LOCAL_CUST"}).then(response => {
         this.localCustOptions = response.data;
       });
-      fetchOptions("HK_CUST").then(response => {
+      fetchOptions({"enumType": "HK_CUST"}).then(response => {
         this.hkCustOptions = response.data;
       });
-      fetchOptions("GOOD_TYPE").then(response => {
+      fetchOptions({"enumType": "GOOD_TYPE"}).then(response => {
         this.goodTypeOptions = response.data;
       });
-      fetchOptions("ORDER_STATE").then(response => {
+      fetchOptions({"enumType": "ORDER_STATE"}).then(response => {
         this.stateOptions = response.data;
       });
-      fetchOptions("PACKING_TYPE").then(response => {
+      fetchOptions({"enumType": "PACKING_TYPE"}).then(response => {
         this.packingTypeOptions = response.data;
       });
     },
