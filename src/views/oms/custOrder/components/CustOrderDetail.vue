@@ -16,7 +16,7 @@
 <!--        </el-autocomplete>-->
 <!--      </el-form-item>-->
       <el-form-item label="大陆客户：" prop="localCust">
-        <el-select v-model="custOrder.localCust">
+        <el-select v-model="custOrder.localCust" class="input-width">
           <el-option v-for="item in localCustOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -25,7 +25,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="香港客户：" prop="hkCust">
-        <el-select v-model="custOrder.hkCust">
+        <el-select v-model="custOrder.hkCust" class="input-width">
           <el-option v-for="item in hkCustOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -34,7 +34,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="品种：" prop="goodType">
-        <el-select v-model="custOrder.goodType">
+        <el-select v-model="custOrder.goodType" class="input-width">
           <el-option v-for="item in goodTypeOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -43,7 +43,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="规格：" prop="packingType">
-        <el-select v-model="custOrder.packingType">
+        <el-select v-model="custOrder.packingType" class="input-width">
           <el-option v-for="item in packingTypeOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -52,16 +52,22 @@
         </el-select>
       </el-form-item>
       <el-form-item label="整件数量：">
-        <el-input-number v-model.number="custOrder.fclNumber" class="input-width"></el-input-number>
+        <el-input-number v-model.number="custOrder.fclNumber" :min="0" class="input-width"></el-input-number>
       </el-form-item>
       <el-form-item label="每件重量：" prop="unitWeight">
-        <el-input v-model="custOrder.unitWeight" clearable class="input-width"></el-input> Kg
+        <el-input v-model="custOrder.unitWeight" clearable class="input-width">
+          <template slot="append">Kg</template>
+        </el-input>
       </el-form-item>
       <el-form-item label="尾数1重量：" prop="additionWeight1">
-        <el-input v-model="custOrder.additionWeight1" clearable class="input-width"></el-input> Kg
+        <el-input v-model="custOrder.additionWeight1" clearable class="input-width">
+          <template slot="append">Kg</template>
+        </el-input>
       </el-form-item>
       <el-form-item label="尾数2重量：" prop="additionWeight2">
-        <el-input v-model="custOrder.additionWeight2" clearable class="input-width"></el-input> Kg
+        <el-input v-model="custOrder.additionWeight2" clearable class="input-width">
+          <template slot="append">Kg</template>
+        </el-input>
       </el-form-item>
       <el-form-item label="下单日期：" prop="orderDate">
         <el-date-picker type="date" placeholder="选择日期" value-format="yyyy-MM-dd hh:mm:ss" v-model="custOrder.orderDate" class="input-width"></el-date-picker>
@@ -125,13 +131,13 @@ import {formatDate} from '@/utils/date';
             {required: true, message: '请选择规格', trigger: 'change'}
           ],
           unitWeight: [
-            {required: true, pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数',trigger: 'blur'}
+            {pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数',trigger: 'blur'}
           ],
           additionWeight1: [
-            {required: true, pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数',trigger: 'blur'}
+            {pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数',trigger: 'blur'}
           ],
           additionWeight2: [
-            {required: true, pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数',trigger: 'blur'}
+            {pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数',trigger: 'blur'}
           ],
           orderDate: [
             {required: true, message: '请选择日期', trigger: 'change' }

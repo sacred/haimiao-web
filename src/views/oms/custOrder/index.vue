@@ -20,9 +20,9 @@
       </div>
       <div style="margin-top: 15px">
         <el-form :inline="true" :model="listQuery" size="small" label-width="140px">
-                    <el-form-item label="订单编号：">
-                      <el-input v-model="listQuery.custOrderNo" class="input-width" placeholder="订单编号"></el-input>
-                    </el-form-item>
+          <el-form-item label="订单编号：">
+            <el-input v-model="listQuery.custOrderNo" class="input-width" placeholder="订单编号"></el-input>
+          </el-form-item>
           <el-form-item label="大陆客户：">
             <el-select v-model="listQuery.localCust" class="input-width" placeholder="全部" clearable>
               <el-option v-for="item in localCustOptions"
@@ -77,62 +77,29 @@
       <el-button size="mini" class="btn-add" @click="handleAdd()">客户下单</el-button>
     </el-card>
     <div class="table-container">
-      <el-table ref="custOrderTable"
+      <el-table ref="custOrderTable" :show-summary="true"
                 :data="list"
                 style="width: 100%;"
                 v-loading="listLoading" border>
-        <el-table-column label="编号" width="80" align="center">
-          <template slot-scope="scope">{{ scope.row.id }}</template>
+        <el-table-column label="订单编号" prop="custOrderNo" width="180" align="center"></el-table-column>
+        <el-table-column label="内地客户" prop="localCust" :formatter="formatOptionData" width="120" align="center"></el-table-column>
+        <el-table-column label="香港客户" prop="hkCust" :formatter="formatOptionData" width="120" align="center"></el-table-column>
+        <el-table-column label="品类" prop="goodType" :formatter="formatOptionData" width="120" align="center"></el-table-column>
+        <el-table-column label="规格" prop="packingType" :formatter="formatOptionData" width="120" align="center"></el-table-column>
+        <el-table-column label="运费(元)" prop="freightFee" :formatter="formatMoney" width="120" align="center" sortable></el-table-column>
+        <el-table-column label="总件数" prop="totalNumber" width="120" align="center"></el-table-column>
+        <el-table-column label="总重量(Kg)" prop="totalWeight" width="120" align="center"></el-table-column>
+        <el-table-column label="件数组成" align="center">
+          <el-table-column label="每件重量" prop="unitWeight" width="120" align="center"></el-table-column>
+          <el-table-column label="整件件数" prop="fclNumber" width="120" align="center"></el-table-column>
+          <el-table-column label="尾数1重量(Kg)" prop="additionWeight1" width="120" align="center"></el-table-column>
+          <el-table-column label="尾数2重量(Kg)" prop="additionWeight2" width="120" align="center"></el-table-column>
         </el-table-column>
-        <el-table-column label="订单编号" width="180" align="center">
-          <template slot-scope="scope">{{ scope.row.custOrderNo }}</template>
-        </el-table-column>
-        <el-table-column label="内地客户" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.localCust }}</template>
-        </el-table-column>
-        <el-table-column label="香港客户" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.hkCust }}</template>
-        </el-table-column>
-        <el-table-column label="品类" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.goodType | formatOptionData(goodTypeOptions) }}</template>
-        </el-table-column>
-        <el-table-column label="规格" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.packingType | formatOptionData(packingTypeOptions) }}</template>
-        </el-table-column>
-        <el-table-column label="运费" width="120" align="center">
-          <template slot-scope="scope">￥{{ scope.row.freightFee }}</template>
-        </el-table-column>
-        <el-table-column label="总重量(Kg)" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.totalWeight }}</template>
-        </el-table-column>
-        <el-table-column label="总件数" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.totalNumber }}</template>
-        </el-table-column>
-        <el-table-column label="整件件数" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.fclNumber }}</template>
-        </el-table-column>
-        <el-table-column label="每件重量" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.unitWeight }}</template>
-        </el-table-column>
-        <el-table-column label="尾数1重量(Kg)" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.additionWeight1 }}</template>
-        </el-table-column>
-        <el-table-column label="尾数2重量(Kg)" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.additionWeight2 }}</template>
-        </el-table-column>
-        <el-table-column label="下单日期" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.orderDate | formatDate }}</template>
-        </el-table-column>
-        <el-table-column label="提交时间" width="180" align="center">
-          <template slot-scope="scope">{{ scope.row.createTime | formatCreateTime }}</template>
-        </el-table-column>
-        <el-table-column label="订单状态" width="120" align="center">
-          <template slot-scope="scope">{{ scope.row.state | formatOptionData(stateOptions) }}</template>
-        </el-table-column>
-        <el-table-column label="备注" width="180" align="center">
-          <template slot-scope="scope">{{ scope.row.remark }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="180" align="center">
+        <el-table-column label="下单日期" prop="orderDate" :formatter="formatDate" width="120" align="center" sortable></el-table-column>
+        <el-table-column label="提交时间" prop="createTime" :formatter="formatCreateTime" width="180" align="center"></el-table-column>
+        <el-table-column label="订单状态" prop="state" :formatter="formatOptionData" width="120" align="center"></el-table-column>
+        <el-table-column label="备注" prop="remark" width="180" show-overflow-tooltip align="center"></el-table-column>
+        <el-table-column label="操作" width="180" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
                 size="mini"
@@ -140,7 +107,7 @@
             </el-button>
             <el-button
                 size="mini"
-                type="danger"
+                type="danger" plain
                 @click="handleCancelOrder(scope.$index, scope.row)"
                 v-show="scope.row.state===1">取消订单
             </el-button>
@@ -212,32 +179,46 @@ export default {
       goodTypeOptions: [],
       packingTypeOptions: [],
       hkCustOptions: [],
-      localCustOptions: []
+      localCustOptions: [],
+      optionMap: {}
     }
   },
   mounted() {
-    this.getList();
+    document.addEventListener('keydown', this.handleKeyDown);
     this.fetchOptions();
+    this.getList();
   },
-  filters: {
-    formatDate(time) {
-      let date = new Date(time);
-      return formatDate(date, 'yyyy-MM-dd')
-    },
-    formatCreateTime(time) {
-      let date = new Date(time);
-      return formatDate(date, 'yyyy-MM-dd hh:mm:ss')
-    },
-    formatOptionData(code, options) {
-        for (let item of options) {
-          if (item.enumCode == code) {
-            return item.enumValue;
-          }
-        }
-        return code;
-    }
+  beforeDestroy() {
+    document.removeEventListener('keydown', this.handleKeyDown);
   },
   methods: {
+    formatMoney(row, column, cellValue, index) {
+      if (cellValue !== null) {
+        return "￥" + cellValue;
+      }
+    },
+    formatDate(row, column, cellValue, index) {
+      let date = new Date(cellValue);
+      return formatDate(date, 'yyyy-MM-dd')
+    },
+    formatCreateTime(row, column, cellValue, index) {
+      let date = new Date(cellValue);
+      return formatDate(date, 'yyyy-MM-dd hh:mm:ss')
+    },
+    formatOptionData(row, column, cellValue, index) {
+      for (let item of this.optionMap[column.property]) {
+        if (item.enumCode == cellValue) {
+          return item.enumValue;
+        }
+      }
+      return cellValue;
+    },
+    handleKeyDown(event) {
+      if (event.code === 'Enter') {
+        event.preventDefault(); //防止默认表单提交
+        this.handleSearchList();
+      }
+    },
     handleResetSearch() {
       this.listQuery = Object.assign({}, defaultListQuery);
     },
@@ -268,7 +249,7 @@ export default {
     },
     getList() {
       this.listLoading = true;
-      fetchList(qs.stringify(this.listQuery, {indices:false})).then(response => {
+      fetchList(qs.stringify(this.listQuery, {indices: false})).then(response => {
         this.listLoading = false;
         this.list = response.data.list;
         this.total = response.data.total;
@@ -277,18 +258,23 @@ export default {
     fetchOptions() {
       fetchOptions({"enumType": "LOCAL_CUST"}).then(response => {
         this.localCustOptions = response.data;
+        this.optionMap["localCust"] = this.localCustOptions;
       });
       fetchOptions({"enumType": "HK_CUST"}).then(response => {
         this.hkCustOptions = response.data;
+        this.optionMap["hkCust"] = this.hkCustOptions;
       });
       fetchOptions({"enumType": "GOOD_TYPE"}).then(response => {
         this.goodTypeOptions = response.data;
+        this.optionMap["goodType"] = this.goodTypeOptions;
       });
       fetchOptions({"enumType": "ORDER_STATE"}).then(response => {
         this.stateOptions = response.data;
+        this.optionMap["state"] = this.stateOptions;
       });
       fetchOptions({"enumType": "PACKING_TYPE"}).then(response => {
         this.packingTypeOptions = response.data;
+        this.optionMap["packingType"] = this.packingTypeOptions;
       });
     },
     handleCacnelOrderConfirm() {
