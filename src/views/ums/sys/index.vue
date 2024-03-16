@@ -1,46 +1,17 @@
 <template> 
   <div class="app-container">
-    <el-card class="filter-container" shadow="never">
-      <div>
-        <i class="el-icon-search"></i>
-        <span>筛选搜索</span>
-        <el-button
-            style="float:right"
-            type="primary"
-            @click="handleSearchList()"
-            size="small">
-          查询搜索
-        </el-button>
-        <el-button
-            style="float:right;margin-right: 15px"
-            @click="handleResetSearch()"
-            size="small">
-          重置
-        </el-button>
-      </div>
-      <div style="margin-top: 15px">
-        <el-form :inline="true" :model="listQuery" size="small" label-width="140px">
-          <el-form-item label="数据类型：">
-            <el-select v-model="listQuery.enumType" required class="input-width" placeholder="全部" @change="handleSearchList()">
-              <el-option v-for="item in SysEnumMap"
-                         :key="item.enumCode"
-                         :label="item.enumValue"
-                         :value="item.enumCode">
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="数据编码：">
-            <el-input v-model="listQuery.enumCode" class="input-width" placeholder="数据编码" clearable></el-input>
-          </el-form-item>
-          <el-form-item label="数据值：">
-            <el-input v-model="listQuery.enumValue" class="input-width" placeholder="数据值" clearable></el-input>
-          </el-form-item>
-        </el-form>
-      </div>
-    </el-card>
+    <el-tabs v-model="listQuery.enumType" @tab-click="handleTabClick">
+      <el-tab-pane v-for="item in SysEnumMap"
+                   :key="item.enumCode"
+                   :label="item.enumValue"
+                   :name="item.enumCode"
+                   :value="item.enumMapValue">
+      </el-tab-pane>
+    </el-tabs>
     <el-card class="operate-container" shadow="never">
       <i class="el-icon-tickets"></i>
       <span>数据列表</span>
+      <el-input v-model="listQuery.enumValue" class="input-width" size="mini" style="margin-left: 20px" placeholder="输入关键字,回车搜索" @change="getList" clearable></el-input>
       <el-button size="mini" class="btn-add" @click="handleAdd()" style="margin-left: 20px">添加</el-button>
     </el-card>
     <div class="table-container">
@@ -49,10 +20,10 @@
                 style="width: 100%;"
                 v-loading="listLoading" border>
         <el-table-column label="排序" prop="sort" width="80" align="center"></el-table-column>
-        <el-table-column label="数据类型" prop="enumType" :formatter="formatOptionData" align="center"></el-table-column>
-        <el-table-column label="数据编码" prop="enumCode" align="center"></el-table-column>
-        <el-table-column label="数据值" prop="enumValue" align="center"></el-table-column>
-        <el-table-column :label="enumMapValue" prop="enumMapValue" v-if="enumMapValue!=null" width="180" align="center"></el-table-column>
+        <el-table-column label="编码" prop="enumCode" align="center"></el-table-column>
+        <el-table-column :label="enumValueLabel" prop="enumValue" align="center"></el-table-column>
+        <el-table-column :label="enumMapValue" prop="enumMapValue" v-if="enumMapValue!=null" width="180"
+                         align="center"></el-table-column>
         <el-table-column label="是否启用" width="140" align="center">
           <template slot-scope="scope">
             <el-switch
@@ -64,8 +35,10 @@
           </template>
         </el-table-column>
         <el-table-column label="操作人" prop="operator" align="center"></el-table-column>
-        <el-table-column label="创建时间" prop="createTime" :formatter="formatCreateTime" width="180" align="center"></el-table-column>
-        <el-table-column label="最后更新时间" prop="updateTime" :formatter="formatCreateTime" width="180" align="center"></el-table-column>
+        <el-table-column label="创建时间" prop="createTime" :formatter="formatCreateTime" width="180"
+                         align="center"></el-table-column>
+        <el-table-column label="最后更新时间" prop="updateTime" :formatter="formatCreateTime" width="180"
+                         align="center"></el-table-column>
         <el-table-column label="操作" width="120" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
@@ -77,14 +50,14 @@
       </el-table>
     </div>
     <el-dialog @close="handleClose" @open="handleOpen"
-        :title="isEdit?'编辑通用数据':'添加通用数据'"
-        :visible.sync="dialogVisible"
-        width="40%">
+               :title="isEdit?'编辑'+enumValueLabel:'添加'+enumValueLabel"
+               :visible.sync="dialogVisible"
+               width="40%">
       <el-form :model="formData" :rules="rules"
                ref="sysForm"
                label-width="35%" size="small">
         <el-form-item label="数据类型：">
-          <el-select v-model="formData.enumType" class="input-width" placeholder="全部" :disabled="isEdit?true:false" @change="handleEnumChange">
+          <el-select v-model="formData.enumType" class="input-width" placeholder="全部" :disabled="true">
             <el-option v-for="item in SysEnumMap"
                        :key="item.enumCode"
                        :label="item.enumValue"
@@ -92,11 +65,11 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="数据编码：" prop="enumCode">
-          <el-input v-model="formData.enumCode" class="input-width"></el-input>
+        <el-form-item :label="enumValueLabel" prop="enumValue">
+          <el-input v-model="formData.enumValue" @input="formData.enumCode=formData.enumValue" class="input-width"></el-input>
         </el-form-item>
-        <el-form-item label="数据值：" prop="enumValue">
-          <el-input v-model="formData.enumValue" class="input-width"></el-input>
+        <el-form-item label="编码：" prop="enumCode">
+          <el-input v-model="formData.enumCode" class="input-width"></el-input>
         </el-form-item>
         <el-form-item :label="enumMapValue" v-if="enumMapValue != null" prop="enumMapValue">
           <el-input v-model="formData.enumMapValue" class="input-width"></el-input>
@@ -119,11 +92,11 @@
   </div>
 </template>
 <script>
-import {fetchOptions, listOptions, addOptions, updateOptions} from '@/api/sysEnum'
+import {addOptions, fetchOptions, listOptions, updateOptions} from '@/api/sysEnum'
 import {formatDate} from '@/utils/date';
 
 const defaultQuery = {
-  enumType: "PACKING_TYPE",
+  enumType: "LOCAL_CUST",
   enumCode: null,
   enumValue: null
 };
@@ -141,16 +114,16 @@ export default {
     return {
       rules: {
         enumCode: [
-          {required: true, message: '请输入数据编码', trigger: 'blur'}
+          {required: true, message: '请输入编码', trigger: 'blur'}
         ],
         enumValue: [
-          {required: true, message: '请输入数据值', trigger: 'blur'}
+          {required: true, message: '请输入数据', trigger: 'blur'}
         ],
         enumMapValue: [
-          {required: true, message: '请选择', trigger: 'blur'}
+          {required: true, message: '请输入数据', trigger: 'blur'}
         ],
         sort: [
-          {required: true, message: '请选择', trigger: 'blur'}
+          {required: true, message: '请填写排序', trigger: 'blur'}
         ],
       },
       listQuery: Object.assign({}, defaultQuery),
@@ -162,7 +135,8 @@ export default {
       dialogVisible: false,
       list: [],
       SysEnumMap: [],
-      enumMapValue: null
+      enumMapValue: null,
+      enumValueLabel: "内地客户"
     }
   },
   mounted() {
@@ -186,33 +160,37 @@ export default {
       }
       return cellValue;
     },
+    handleTabClick(tab, event) {
+      this.enumValueLabel = tab.label;
+      this.enumMapValue = tab.$attrs.value;
+      this.handleSearchList();
+    },
     handleKeyDown(event) {
       if (event.code === 'Enter') {
         event.preventDefault(); //防止默认表单提交
         this.handleSearchList();
       }
     },
-    handleOpen(e){
-      this.$nextTick(()=>{
+    handleOpen(e) {
+      this.$nextTick(() => {
         this.$refs["sysForm"].clearValidate();
       })
     },
-    handleClose(){
-      this.$nextTick(()=>{
+    handleClose() {
+      this.$nextTick(() => {
         this.$refs["sysForm"].resetFields();
       })
     },
     handleResetSearch() {
-      this.listQuery = Object.assign({}, defaultQuery);
+      this.listQuery = Object.assign({}, defaultQuery, {enumType: this.listQuery.enumType});
     },
     handleSearchList() {
-      this.handleEnumChange(this.listQuery.enumType);
       this.getList();
     },
     handleAdd() {
       this.dialogVisible = true;
       this.isEdit = false;
-      this.formData = Object.assign({}, defaultData);
+      this.formData = Object.assign({}, defaultData, {enumType: this.listQuery.enumType});
     },
     handleUpdate(index, row) {
       this.dialogVisible = true;
@@ -239,14 +217,6 @@ export default {
         });
         this.getList();
       });
-    },
-    handleEnumChange(value) {
-      for (let item of this.SysEnumMap) {
-        if (item.enumCode == value) {
-          this.enumMapValue = item.enumMapValue;
-          break;
-        }
-      }
     },
     handleDialogConfirm(form) {
       this.$confirm('是否要确认?', '提示', {

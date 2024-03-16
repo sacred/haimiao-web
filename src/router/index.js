@@ -175,6 +175,26 @@ export const asyncRouterMap = [
         hidden:true
       },
       {
+        path: 'shipOrder',
+        name: 'shipOrder',
+        component: () => import('@/views/oms/shipOrder/index'),
+        meta: {title: '运单配载', icon: 'order-return-reason'}
+      },
+      {
+        path: 'addShipOrder',
+        name: 'addShipOrder',
+        component: () => import('@/views/oms/shipOrder/add'),
+        meta: {title: '新增运单配载'},
+        hidden:true
+      },
+      {
+        path: 'updateShipOrder',
+        name: 'updateShipOrder',
+        component: () => import('@/views/oms/shipOrder/update'),
+        meta: {title: '运单配载修改'},
+        hidden:true
+      },
+      {
         path: 'orderDetail',
         name: 'orderDetail',
         component: () => import('@/views/oms/order/orderDetail'),
