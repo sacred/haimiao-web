@@ -20,30 +20,12 @@
       </div>
       <div style="margin-top: 15px">
         <el-form :inline="true" :model="listQuery" size="small" label-width="140px">
-          <el-form-item label="订单编号：">
-            <el-input v-model="listQuery.custOrderNo" class="input-width" placeholder="订单编号"></el-input>
+          <el-form-item label="运单编号：">
+            <el-input v-model="listQuery.loadingNo" class="input-width" placeholder="运单编号"></el-input>
           </el-form-item>
-          <el-form-item label="大陆客户：">
-            <el-select v-model="listQuery.localCust" class="input-width" placeholder="全部" clearable>
-              <el-option v-for="item in localCustOptions"
-                         :key="item.enumCode"
-                         :label="item.enumValue"
-                         :value="item.enumCode">
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="香港客户：">
-            <el-select v-model="listQuery.hkCust" class="input-width" placeholder="全部" clearable>
-              <el-option v-for="item in hkCustOptions"
-                         :key="item.enumCode"
-                         :label="item.enumValue"
-                         :value="item.enumCode">
-              </el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="品类：">
-            <el-select v-model="listQuery.goodType" class="input-width" placeholder="全部" clearable>
-              <el-option v-for="item in goodTypeOptions"
+          <el-form-item label="车牌号码：">
+            <el-select v-model="listQuery.plateNumber" class="input-width" clearable filterable placeholder="请选择">
+              <el-option v-for="item in plateNumberOptions"
                          :key="item.enumCode"
                          :label="item.enumValue"
                          :value="item.enumCode">
@@ -59,7 +41,7 @@
                 placeholder="请选择时间">
             </el-date-picker>
           </el-form-item>
-          <el-form-item label="订单状态：">
+          <el-form-item label="运单状态：">
             <el-select v-model="listQuery.orderState" class="input-width" multiple placeholder="全部" clearable>
               <el-option v-for="item in stateOptions"
                          :key="item.enumCode"
@@ -74,42 +56,30 @@
     <el-card class="operate-container" shadow="never">
       <i class="el-icon-tickets"></i>
       <span>数据列表</span>
-      <el-button size="mini" class="btn-add" @click="handleAdd()">客户下单</el-button>
+      <el-button size="mini" class="btn-add" @click="handleAdd()">新增配载</el-button>
     </el-card>
     <div class="table-container">
-      <el-table ref="custOrderTable" :show-summary="true"
+      <el-table ref="shipOrderTable"
                 :data="list"
                 style="width: 100%;"
                 v-loading="listLoading" border>
-        <el-table-column label="订单编号" prop="custOrderNo" width="180" align="center"></el-table-column>
-        <el-table-column label="内地客户" prop="localCust" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="香港客户" prop="hkCust" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="品类" prop="goodType" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="规格" prop="packingType" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="运费(元)" prop="freightFee" :formatter="formatMoney" width="120" align="center" sortable></el-table-column>
-        <el-table-column label="总件数" prop="totalNumber" width="120" align="center"></el-table-column>
-        <el-table-column label="总重量(Kg)" prop="totalWeight" width="120" align="center"></el-table-column>
-        <el-table-column label="件数组成" align="center">
-          <el-table-column label="每件重量" prop="unitWeight" width="120" align="center"></el-table-column>
-          <el-table-column label="整件件数" prop="fclNumber" width="120" align="center"></el-table-column>
-          <el-table-column label="尾数1重量(Kg)" prop="additionWeight1" width="120" align="center"></el-table-column>
-          <el-table-column label="尾数2重量(Kg)" prop="additionWeight2" width="120" align="center"></el-table-column>
-        </el-table-column>
-        <el-table-column label="下单日期" prop="orderDate" :formatter="formatDate" width="120" align="center" sortable></el-table-column>
+        <el-table-column label="运单编号" prop="loadingNo" width="180" align="center"></el-table-column>
+        <el-table-column label="车牌号码" prop="plateNumber" :formatter="formatOptionData" align="center"></el-table-column>
+        <el-table-column label="运费(元)" prop="freightFee" :formatter="formatMoney" align="center" sortable></el-table-column>
+        <el-table-column label="总件数" prop="totalNumber" align="center"></el-table-column>
+        <el-table-column label="总重量(Kg)" prop="totalWeight" align="center"></el-table-column>
+        <el-table-column label="下单日期" prop="loadingDate" :formatter="formatDate" width="120" align="center" sortable></el-table-column>
         <el-table-column label="提交时间" prop="createTime" :formatter="formatCreateTime" width="180" align="center"></el-table-column>
-        <el-table-column label="订单状态" prop="state" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="备注" prop="remark" width="180" show-overflow-tooltip align="center"></el-table-column>
+        <el-table-column label="运单状态" prop="state" :formatter="formatOptionData" align="center"></el-table-column>
         <el-table-column label="操作" width="180" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
                 size="mini"
-                @click="handleUpdate(scope.$index, scope.row)">编辑
+                @click="handleView(scope.$index, scope.row)">查看
             </el-button>
             <el-button
                 size="mini"
-                type="danger" plain
-                @click="handleCancelOrder(scope.$index, scope.row)"
-                v-show="scope.row.state===1">取消订单
+                @click="handleUpdate(scope.$index, scope.row)">修改
             </el-button>
           </template>
         </el-table-column>
@@ -128,7 +98,7 @@
       </el-pagination>
     </div>
     <el-dialog
-        title="取消订单"
+        title="取消运单"
         :visible.sync="cancelOrder.dialogVisible" width="30%">
       <span style="vertical-align: top">操作备注：</span>
       <el-input
@@ -148,21 +118,24 @@
 <script>
 import qs from 'qs'
 import {fetchOptions} from '@/api/sysEnum'
-import {cancelOrder, fetchList} from '@/api/custOrder'
+import {fetchList} from '@/api/shipOrder'
 import {formatDate} from '@/utils/date';
 
 const defaultListQuery = {
   pageNum: 1,
   pageSize: 10,
-  custOrderNo: null,
+  plateNumber: null,
+  bucketNo: null,
+  bucketId: null,
+  shipOrderNo: null,
   localCust: null,
   hkCust: null,
   goodType: null,
   orderState: [],
-  createTime: null,
+  orderDate: formatDate(new Date(), 'yyyy-MM-dd'),
 };
 export default {
-  name: "custOrderList",
+  name: "shipOrderList",
   data() {
     return {
       listQuery: Object.assign({}, defaultListQuery),
@@ -180,13 +153,14 @@ export default {
       packingTypeOptions: [],
       hkCustOptions: [],
       localCustOptions: [],
+      plateNumberOptions: [],
       optionMap: {}
     }
   },
   mounted() {
     document.addEventListener('keydown', this.handleKeyDown);
     this.fetchOptions();
-    this.getList();
+    this.handleSearchList();
   },
   beforeDestroy() {
     document.removeEventListener('keydown', this.handleKeyDown);
@@ -206,7 +180,7 @@ export default {
       return formatDate(date, 'yyyy-MM-dd hh:mm:ss')
     },
     formatOptionData(row, column, cellValue, index) {
-      for (let item of this.optionMap[column.property]) {
+      for (let item of this.optionMap[column.property.substr(column.property.indexOf('\.')+1)]) {
         if (item.enumCode == cellValue) {
           return item.enumValue;
         }
@@ -228,10 +202,6 @@ export default {
       this.listQuery.orderDateEnd = this.listQuery.orderDate
       this.getList();
     },
-    handleCancelOrder(index, row) {
-      this.cancelOrder.dialogVisible = true;
-      this.cancelOrder.id = row.id;
-    },
     handleSizeChange(val) {
       this.listQuery.pageNum = 1;
       this.listQuery.pageSize = val;
@@ -242,10 +212,13 @@ export default {
       this.getList();
     },
     handleAdd() {
-      this.$router.push({path: '/oms/addCustOrder'})
+      this.$router.push({path: '/oms/addShipOrder'})
+    },
+    handleView(index, row) {
+      this.$router.push({path: '/oms/viewShipOrder', query: {id: row.id}});
     },
     handleUpdate(index, row) {
-      this.$router.push({path: '/oms/updateCustOrder', query: {id: row.id}})
+      this.$router.push({path: '/oms/updateShipOrder', query: {id: row.id}})
     },
     getList() {
       this.listLoading = true;
@@ -276,6 +249,10 @@ export default {
         this.packingTypeOptions = response.data;
         this.optionMap["packingType"] = this.packingTypeOptions;
       });
+      fetchOptions({"enumType": "PLATE_NUMBER"}).then(response => {
+        this.plateNumberOptions = response.data;
+        this.optionMap["plateNumber"] = this.plateNumberOptions;
+      });
     },
     handleCacnelOrderConfirm() {
       if (this.cancelOrder.content == null || this.cancelOrder.content === '') {
@@ -294,7 +271,7 @@ export default {
         this.cancelOrder.dialogVisible = false;
         this.getList();
         this.$message({
-          message: '取消订单成功',
+          message: '取消运单成功',
           type: 'success',
           duration: 1000
         });

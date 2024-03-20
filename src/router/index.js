@@ -184,7 +184,14 @@ export const asyncRouterMap = [
         path: 'addShipOrder',
         name: 'addShipOrder',
         component: () => import('@/views/oms/shipOrder/add'),
-        meta: {title: '新增运单配载'},
+        meta: {title: '运单配载维护'},
+        hidden:true
+      },
+      {
+        path: 'viewShipOrder',
+        name: 'viewShipOrder',
+        component: () => import('@/views/oms/shipOrder/view'),
+        meta: {title: '运单配载详情'},
         hidden:true
       },
       {

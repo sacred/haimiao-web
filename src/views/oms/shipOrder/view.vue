@@ -1,14 +1,12 @@
 <template>
-  <ship-order-detail :isEdit="true"></ship-order-detail>
+  <ship-order-detail :isEdit="false"></ship-order-detail>
 </template>
 <script>
 import ShipOrderDetail from './components/ShipOrderDetail'
 export default {
-  name: 'updateShipOrder',
+  name: 'viewShipOrder',
   components: { ShipOrderDetail }
 }
 </script>
 <style scoped>
 </style>
-
-

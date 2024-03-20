@@ -5,16 +5,6 @@
              ref="custOrderForm"
              label-width="150px"
              size="small">
-<!--      <el-form-item label="大陆客户：">-->
-<!--        <el-autocomplete-->
-<!--            class="inline-input"-->
-<!--            v-model="custOrder.localCust"-->
-<!--            :fetch-suggestions="querySearch"-->
-<!--            placeholder="请输入内容过滤"-->
-<!--            :trigger-on-focus="true"-->
-<!--            @select="handleSelect">-->
-<!--        </el-autocomplete>-->
-<!--      </el-form-item>-->
       <el-form-item label="大陆客户：" prop="localCust">
         <el-select v-model="custOrder.localCust" class="input-width">
           <el-option v-for="item in localCustOptions"
@@ -51,7 +41,7 @@
           </el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="整件数量：">
+      <el-form-item label="整件数量：" prop="fclNumber">
         <el-input-number v-model.number="custOrder.fclNumber" :min="0" class="input-width"></el-input-number>
       </el-form-item>
       <el-form-item label="每件重量：" prop="unitWeight">
@@ -103,7 +93,7 @@ import {formatDate} from '@/utils/date';
     unitWeight: 10,
     additionWeight1: 0,
     additionWeight2: 0,
-    orderDate: new Date(),
+    orderDate: formatDate(new Date(), 'yyyy-MM-dd'),
     remark: null
   };
   export default {
@@ -129,6 +119,9 @@ import {formatDate} from '@/utils/date';
           ],
           packingType: [
             {required: true, message: '请选择规格', trigger: 'change'}
+          ],
+          fclNumber: [
+            {required: true, message: '请填写整件数量', trigger: 'blur'}
           ],
           unitWeight: [
             {pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数',trigger: 'blur'}

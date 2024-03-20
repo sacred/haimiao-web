@@ -206,7 +206,7 @@ export default {
       return formatDate(date, 'yyyy-MM-dd hh:mm:ss')
     },
     formatOptionData(row, column, cellValue, index) {
-      for (let item of this.optionMap[column.property]) {
+      for (let item of this.optionMap[column.property.substr(column.property.indexOf('\.')+1)]) {
         if (item.enumCode == cellValue) {
           return item.enumValue;
         }
