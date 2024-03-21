@@ -55,7 +55,10 @@
                 class="input-width"
                 v-model="listQuery.orderDate"
                 value-format="yyyy-MM-dd"
-                type="date"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
                 placeholder="请选择时间">
             </el-date-picker>
           </el-form-item>
@@ -151,6 +154,8 @@ import {fetchOptions} from '@/api/sysEnum'
 import {cancelOrder, fetchList} from '@/api/custOrder'
 import {formatDate} from '@/utils/date';
 
+let start = new Date();
+start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
 const defaultListQuery = {
   pageNum: 1,
   pageSize: 10,
@@ -160,6 +165,7 @@ const defaultListQuery = {
   goodType: null,
   orderState: [],
   createTime: null,
+  orderDate: [formatDate(start, 'yyyy-MM-dd'), formatDate(new Date(), 'yyyy-MM-dd')],
 };
 export default {
   name: "custOrderList",
@@ -224,8 +230,8 @@ export default {
     },
     handleSearchList() {
       this.listQuery.pageNum = 1;
-      this.listQuery.orderDateStart = this.listQuery.orderDate;
-      this.listQuery.orderDateEnd = this.listQuery.orderDate
+      this.listQuery.orderDateStart = this.listQuery.orderDate[0];
+      this.listQuery.orderDateEnd = this.listQuery.orderDate[1]
       this.getList();
     },
     handleCancelOrder(index, row) {

@@ -18,7 +18,7 @@
                  @mouseleave.native="$set(bucketOptions[rowIndex*4+colIndex], 'showButton', false)">
           <div slot="header" class="clearfix">
             <span>{{ bucketOptions[rowIndex * 4 + colIndex].enumValue }}</span>
-            <el-button style="float: right; padding: 3px 0" type="text" @click="handleUpdate(bucketIdMap[bucketOptions[rowIndex * 4 + colIndex].enumValue])"
+            <el-button style="float: right; padding: 3px 0" type="text" @click="handleUpdate(bucketIdMap[bucketOptions[rowIndex * 4 + colIndex].enumValue], bucketOptions[rowIndex * 4 + colIndex].enumValue)"
                        v-if="isEdit && bucketOptions[rowIndex*4+colIndex].showButton">配载装货
             </el-button>
           </div>
@@ -32,23 +32,10 @@
   </el-card>
 </template>
 <script>
+import {toBase64} from 'js-base64'
 import {fetchOptions} from '@/api/sysEnum'
-import {createShipOrder, getShipOrderInfo} from '@/api/shipOrder'
-import {formatDate} from '@/utils/date';
+import {getShipOrderInfo} from '@/api/shipOrder'
 
-const defaultShipOrder = {
-  id: null,
-  localCust: null,
-  hkCust: null,
-  goodType: null,
-  packingType: null,
-  fclNumber: 0,
-  unitWeight: 10,
-  additionWeight1: 0,
-  additionWeight2: 0,
-  orderDate: new Date(),
-  remark: null
-};
 export default {
   name: 'shipOrderDetailView',
   props: {
@@ -62,43 +49,11 @@ export default {
       loadingInfo: [],
       bucketIdMap: [],
       bucketNoMap: [],
-      shipOrder: Object.assign({}, defaultShipOrder),
-      stateOptions: [],
-      goodTypeOptions: [],
-      packingTypeOptions: [],
-      hkCustOptions: [],
-      localCustOptions: [],
       bucketOptions: [],
       showButton: false,
-      rules: {
-        localCust: [
-          {required: true, message: '请选择大陆客户', trigger: 'change'}
-        ],
-        hkCust: [
-          {required: true, message: '请选择香港客户', trigger: 'change'}
-        ],
-        goodType: [
-          {required: true, message: '请选择品种', trigger: 'change'}
-        ],
-        packingType: [
-          {required: true, message: '请选择规格', trigger: 'change'}
-        ],
-        unitWeight: [
-          {pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数', trigger: 'blur'}
-        ],
-        additionWeight1: [
-          {pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数', trigger: 'blur'}
-        ],
-        additionWeight2: [
-          {pattern: /^[0-9]+(\.[0-9]{1,2})?$/, message: '只能输入数值，限2位小数', trigger: 'blur'}
-        ],
-        orderDate: [
-          {required: true, message: '请选择日期', trigger: 'change'}
-        ]
-      },
     }
   },
-  mounted() {
+  created() {
     this.getOptions();
     getShipOrderInfo(this.$route.query.id).then(response => {
       let shipOrder = response.data;
@@ -112,81 +67,12 @@ export default {
       }
     });
   },
-  filters: {
-    formatDate(time) {
-      let date = new Date(time);
-      return formatDate(date, 'yyyy-MM-dd')
-    },
-  },
   methods: {
-    handleUpdate(id) {
-      this.$router.push({path: '/oms/addShipOrder', query: {id: id}})
-    },
-    onSubmit(formName) {
-      this.$refs[formName].validate((valid) => {
-        if (valid) {
-          this.$confirm('是否提交数据', '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }).then(() => {
-            if (this.isEdit) {
-              updateshipOrder(this.shipOrder).then(response => {
-                this.$refs[formName].resetFields();
-                this.$message({
-                  message: '修改成功',
-                  type: 'success',
-                  duration: 1000
-                });
-                this.$router.back();
-              });
-            } else {
-              let newshipOrder = {};
-              newshipOrder.localship = this.shipOrder.localship;
-              newshipOrder.hkship = this.shipOrder.hkship;
-              newshipOrder.orderDetailDtoList = [];
-              newshipOrder.orderDetailDtoList.push({...this.shipOrder});
-              createShipOrder(newshipOrder).then(response => {
-                this.$refs[formName].resetFields();
-                this.$message({
-                  message: '提交成功',
-                  type: 'success',
-                  duration: 1000
-                });
-                this.$router.back();
-              });
-            }
-          });
-        } else {
-          this.$message({
-            message: '验证失败',
-            type: 'error',
-            duration: 1000
-          });
-          return false;
-        }
-      });
-    },
-    resetForm(formName) {
-      this.$refs[formName].resetFields();
-      this.shipOrder = Object.assign({}, defaultshipOrder);
+    handleUpdate(id, bucketNo) {
+      let param = toBase64(JSON.stringify({id, bucketNo, 'plateNumber': this.loadingInfo.plateNumber, 'orderLoadingId': this.loadingInfo.id, 'loadingDate': this.loadingInfo.loadingDate}));
+      this.$router.push({path: '/oms/addShipOrder', query: {param}})
     },
     getOptions() {
-      fetchOptions({"enumType": "LOCAL_ship"}).then(response => {
-        this.localCustOptions = response.data;
-      });
-      fetchOptions({"enumType": "HK_ship"}).then(response => {
-        this.hkCustOptions = response.data;
-      });
-      fetchOptions({"enumType": "GOOD_TYPE"}).then(response => {
-        this.goodTypeOptions = response.data;
-      });
-      fetchOptions({"enumType": "ORDER_STATE"}).then(response => {
-        this.stateOptions = response.data;
-      });
-      fetchOptions({"enumType": "PACKING_TYPE"}).then(response => {
-        this.packingTypeOptions = response.data;
-      });
       fetchOptions({"enumType": "BUCKET_NO"}).then(response => {
         this.bucketOptions = response.data;
       });
@@ -201,7 +87,6 @@ export default {
 .input-width {
   width: 60%;
 }
-
 .el-row {
   margin-bottom: 20px;
 

@@ -5,7 +5,7 @@
              label-width="200px"
              size="small">
       <el-form-item label="车牌号码：" prop="plateNumber" :rules="{required: true, message: '请选择车牌号码', trigger: 'change'}">
-        <el-select v-model="shipOrder.plateNumber" :disabled="isEdit" class="input-width" filterable placeholder="请选择">
+        <el-select v-model="shipOrder.plateNumber" :disabled="editSatus>0" class="input-width" filterable placeholder="请选择">
           <el-option v-for="item in plateNumberOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -14,7 +14,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="桶位：" prop="bucketNo" :rules="{required: true, message: '请选择装载的桶位', trigger: 'change'}">
-        <el-select v-model="shipOrder.bucketNo" :disabled="isEdit" class="input-width" filterable placeholder="请选择">
+        <el-select v-model="shipOrder.bucketNo" :disabled="editSatus>0" class="input-width" filterable placeholder="请选择">
           <el-option v-for="item in bucketOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -23,7 +23,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="出口公司：" prop="exportCompany" :rules="{required: true, message: '请选择出口公司', trigger: 'change'}">
-        <el-select v-model="shipOrder.exportCompany" :disabled="isEdit" class="input-width" placeholder="请选择">
+        <el-select v-model="shipOrder.exportCompany" :disabled="editSatus>1" class="input-width" placeholder="请选择">
           <el-option v-for="item in exportCompanyOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -31,20 +31,20 @@
           </el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="运输日期：" prop="loadingDate" v-if="!isEdit"
+      <el-form-item label="运输日期：" prop="loadingDate" v-if="!editSatus>0"
                     :rules="{required: true, message: '请选择日期', trigger: 'change' }">
         <el-date-picker type="date" placeholder="选择日期" value-format="yyyy-MM-dd" v-model="shipOrder.loadingDate"
                         class="input-width"></el-date-picker>
       </el-form-item>
-      <el-form-item label="备注：">
-        <el-input
-            class="input-width"
-            type="textarea"
-            :rows="5"
-            placeholder="请输入内容"
-            v-model="shipOrder.remark">
-        </el-input>
-      </el-form-item>
+<!--      <el-form-item label="备注：">-->
+<!--        <el-input-->
+<!--            class="input-width"-->
+<!--            type="textarea"-->
+<!--            :rows="5"-->
+<!--            placeholder="请输入内容"-->
+<!--            v-model="shipOrder.remark">-->
+<!--        </el-input>-->
+<!--      </el-form-item>-->
       <el-table ref="bucketGoodsTable"
                 :data="shipOrder.goodsDetailList"
                 style="width: 100%;" border>
@@ -78,7 +78,7 @@
         <el-button :disabled="!isChange" type="primary" @click="onSubmit('shipOrderForm')"
                    :class="{ 'flash-btn': isFlashing }">提交
         </el-button>
-        <el-button v-if="!isEdit" @click="resetForm('shipOrderForm')">重置</el-button>
+        <el-button v-if="!editSatus" @click="resetForm('shipOrderForm')">重置</el-button>
         <el-button @click="goBack()">返回</el-button>
       </el-form-item>
     </el-form>
@@ -153,12 +153,14 @@
   </el-card>
 </template>
 <script>
+import {fromBase64} from 'js-base64'
 import {fetchOptions} from '@/api/sysEnum'
-import {getGoodsDetail, updateShipOrder} from '@/api/shipOrder'
+import {getGoodsDetail, createShipOrder, updateShipOrder} from '@/api/shipOrder'
 import {formatDate} from '@/utils/date';
 
 const defaultGoodsDetail = {
   id: null,
+  orderLoadingId: null,
   localCust: null,
   hkCust: null,
   goodType: null,
@@ -171,6 +173,7 @@ const defaultGoodsDetail = {
   remark: null
 };
 const defaultShipOrder = {
+  orderLoadingId: null,
   bucketNo: null,
   exportCompany: null,
   plateNumber: null,
@@ -181,7 +184,7 @@ export default {
   name: 'addShipOrderDetail',
   data() {
     return {
-      isEdit: false,
+      editSatus: 0, //0新车配载新桶位(全可编辑), 1已有车配载新桶位(桶位关联信息可编辑), 2已有车配载已有桶位(桶位关联信息不可编辑）
       isChange: false,
       isFlashing: false,
       shipOrder: Object.assign({}, defaultShipOrder),
@@ -226,15 +229,25 @@ export default {
       },
     }
   },
-  mounted() {
-    this.isEdit = false;
+  created() {
     this.getOptions();
-    if (this.$route.query.id > 0) {
-      this.isEdit = true;
-      getGoodsDetail(this.$route.query.id).then(response => {
-        this.shipOrder = response.data;
-        this.defaultShipOrder = Object.assign({}, response.data);
-      });
+    defaultShipOrder.goodsDetailList = [];
+    if (this.$route.query.param) {
+      let param = JSON.parse(fromBase64(this.$route.query.param));
+      if (param.id > 0) {
+        this.editSatus = 2;
+        getGoodsDetail(param.id).then(response => {
+          this.shipOrder = response.data;
+          this.defaultShipOrder = Object.assign({}, response.data);
+        });
+      } else {
+        this.editSatus = 1;
+        this.shipOrder = Object.assign({}, defaultShipOrder);
+        this.shipOrder.plateNumber = param.plateNumber;
+        this.shipOrder.bucketNo = param.bucketNo;
+        this.shipOrder.loadingDate = param.loadingDate;
+        this.shipOrder.orderLoadingId = param.orderLoadingId;
+      }
     }
   },
   filters: {
@@ -255,7 +268,7 @@ export default {
       })
     },
     handleAddGoodsDetail() {
-      this.editOrder = Object.assign({}, Object.assign({}, defaultGoodsDetail), {
+      this.editOrder = Object.assign({}, {...defaultGoodsDetail}, {
         index: this.shipOrder.goodsDetailList.length,
         dialogVisible: true
       })
@@ -309,15 +322,27 @@ export default {
             cancelButtonText: '取消',
             type: 'warning'
           }).then(() => {
-            updateShipOrder(this.shipOrder.goodsDetailList).then(response => {
-              this.$refs[formName].resetFields();
-              this.$message({
-                message: '更新成功',
-                type: 'success',
-                duration: 1000
+            if (this.shipOrder.orderLoadingId > 0) {
+              updateShipOrder(this.shipOrder).then(response => {
+                this.$refs[formName].resetFields();
+                this.$message({
+                  message: '更新成功',
+                  type: 'success',
+                  duration: 1000
+                });
+                this.$router.back();
               });
-              this.$router.back();
-            });
+            } else {
+              createShipOrder(this.shipOrder).then(response => {
+                this.$refs[formName].resetFields();
+                this.$message({
+                  message: '提交成功',
+                  type: 'success',
+                  duration: 1000
+                });
+                this.$router.back();
+              });
+            }
           });
         } else {
           this.$message({

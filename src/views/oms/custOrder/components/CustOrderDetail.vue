@@ -143,7 +143,7 @@ import {formatDate} from '@/utils/date';
         localCustOptions: [],
       }
     },
-    mounted(){
+    created(){
       this.getOptions();
       if(this.isEdit){
         getCustOrderInfo(this.$route.query.id).then(response=>{
