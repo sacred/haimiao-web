@@ -68,9 +68,9 @@
         <el-form-item :label="enumValueLabel" prop="enumValue">
           <el-input v-model="formData.enumValue" @input="formData.enumCode=formData.enumValue" class="input-width"></el-input>
         </el-form-item>
-        <el-form-item label="编码：" prop="enumCode">
-          <el-input v-model="formData.enumCode" class="input-width"></el-input>
-        </el-form-item>
+<!--        <el-form-item label="编码：" prop="enumCode">-->
+<!--          <el-input v-model="formData.enumCode" class="input-width"></el-input>-->
+<!--        </el-form-item>-->
         <el-form-item :label="enumMapValue" v-if="enumMapValue != null" prop="enumMapValue">
           <el-input v-model="formData.enumMapValue" class="input-width"></el-input>
         </el-form-item>
@@ -113,9 +113,9 @@ export default {
   data() {
     return {
       rules: {
-        enumCode: [
-          {required: true, message: '请输入编码', trigger: 'blur'}
-        ],
+        // enumCode: [
+        //   {required: true, message: '请输入编码', trigger: 'blur'}
+        // ],
         enumValue: [
           {required: true, message: '请输入数据', trigger: 'blur'}
         ],
@@ -163,6 +163,7 @@ export default {
     handleTabClick(tab, event) {
       this.enumValueLabel = tab.label;
       this.enumMapValue = tab.$attrs.value;
+      this.listQuery.enumValue = '';
       this.handleSearchList();
     },
     handleKeyDown(event) {

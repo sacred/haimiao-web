@@ -61,14 +61,12 @@
             <el-button size="mini" v-if="scope.row.state<=2"
                        @click="handleUpdate(scope.$index, scope.row)">修改
             </el-button>
+            <el-tag type="success" v-if="scope.row.state>2">已装车确认</el-tag>
             <el-button size="mini"
                        @click="handleCopy(scope.$index, scope.row)">复制
             </el-button>
             <el-button type="danger" size="mini" plain v-if="scope.row.state<=2"
                        @click="handleDeleteGoodsDetail(scope.$index, scope.row)">删除
-            </el-button>
-            <el-button size="mini" type="success" plain v-if="scope.row.state===3"
-                       @click="handleUpdate(scope.$index, scope.row)">配载核查
             </el-button>
           </template>
         </el-table-column>
@@ -169,7 +167,6 @@ const defaultGoodsDetail = {
   unitWeight: 10,
   additionWeight1: 0,
   additionWeight2: 0,
-  state: 2,
   remark: null
 };
 const defaultShipOrder = {
@@ -264,7 +261,8 @@ export default {
       this.editOrder = Object.assign({}, row, {
         index: this.shipOrder.goodsDetailList.length,
         dialogVisible: true,
-        id: null
+        id: null,
+        state: 2
       })
     },
     handleAddGoodsDetail() {
@@ -290,7 +288,7 @@ export default {
     },
     handleDialogCancel(formName) {
       this.$refs[formName].resetFields();
-      this.$refs['editOrderForm'].clearValidate()
+      this.$refs[formName].clearValidate();
     },
     handleDialogConfirm(formName) {
       this.$refs[formName].validate((valid) => {

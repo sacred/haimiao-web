@@ -1,5 +1,5 @@
 <template>
-  <ship-order-detail :isEdit="false"></ship-order-detail>
+  <ship-order-detail actionType="view"></ship-order-detail>
 </template>
 <script>
 import ShipOrderDetail from './components/ShipOrderDetail'

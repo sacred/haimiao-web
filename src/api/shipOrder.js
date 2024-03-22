@@ -41,7 +41,7 @@ export function loadingConfirm(params) {
   return request({
     url:'/loading/confirm/loading',
     method:'post',
-    data: params
+    params: params
   })
 }
 
@@ -49,6 +49,6 @@ export function sendingConfirm(params) {
   return request({
     url:'/loading/confirm/sending',
     method:'post',
-    data: params
+    params: params
   })
 }

@@ -199,9 +199,10 @@ export default {
   },
   methods: {
     formatMoney(row, column, cellValue, index) {
-      if (cellValue !== null) {
-        return "￥" + cellValue;
-      }
+      if (!cellValue) return '￥0.00';
+      const parts = cellValue.toString().split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return '￥' + parts.join('.');
     },
     formatDate(row, column, cellValue, index) {
       let date = new Date(cellValue);

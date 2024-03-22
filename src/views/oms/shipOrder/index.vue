@@ -32,18 +32,6 @@
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="下单日期：">
-            <el-date-picker
-                class="input-width"
-                v-model="listQuery.orderDate"
-                value-format="yyyy-MM-dd"
-                type="daterange"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                placeholder="请选择时间">
-            </el-date-picker>
-          </el-form-item>
           <el-form-item label="运单状态：">
             <el-select v-model="listQuery.orderState" class="input-width" multiple placeholder="全部" clearable>
               <el-option v-for="item in stateOptions"
@@ -52,6 +40,17 @@
                          :value="item.enumCode">
               </el-option>
             </el-select>
+          </el-form-item>
+          <el-form-item label="下单日期：">
+            <el-date-picker
+                v-model="listQuery.orderDate"
+                value-format="yyyy-MM-dd"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                placeholder="请选择时间">
+            </el-date-picker>
           </el-form-item>
         </el-form>
       </div>
@@ -64,41 +63,36 @@
     <div class="table-container">
       <el-table ref="shipOrderTable"
                 :data="list"
+                show-summary
                 style="width: 100%;"
                 v-loading="listLoading" border>
-        <el-table-column label="运单编号" prop="loadingNo" width="180" align="center"></el-table-column>
+        <el-table-column label="运单编号" prop="loadingNo" width="160" align="center"></el-table-column>
         <el-table-column label="车牌号码" prop="plateNumber" :formatter="formatOptionData" align="center"></el-table-column>
         <el-table-column label="运费(元)" prop="freightFee" :formatter="formatMoney" align="center" sortable></el-table-column>
         <el-table-column label="总件数" prop="totalNumber" align="center"></el-table-column>
         <el-table-column label="总重量(Kg)" prop="totalWeight" align="center"></el-table-column>
         <el-table-column label="下单日期" prop="loadingDate" :formatter="formatDate" width="120" align="center" sortable></el-table-column>
         <el-table-column label="提交时间" prop="createTime" :formatter="formatCreateTime" width="180" align="center"></el-table-column>
-        <el-table-column label="运单状态" prop="state" :formatter="formatOptionData" align="center"></el-table-column>
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column label="运单状态" prop="minState" :formatter="formatOptionData" align="center"></el-table-column>
+        <el-table-column label="操作" width="260" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
                 size="mini"
                 @click="handleView(scope.$index, scope.row)">查看
             </el-button>
-            <el-button
-                size="mini"
-                @click="handleUpdate(scope.$index, scope.row)">修改
+            <el-button type="primary"
+                size="mini" v-if="!scope.row.minState || ((scope.row.minState==2 || scope.row.minState==3) && scope.row.maxState < 4)"
+                @click="handleUpdate(scope.$index, scope.row)">配载
+            </el-button>
+            <el-button size="mini" v-if="scope.row.minState==2" type="success" plain
+                       @click="handleLoadingCheck(scope.$index, scope.row, 'loadingCheck')">装车确认
+            </el-button>
+            <el-button size="mini" v-if="scope.row.minState==3 || scope.row.minState==4" type="primary" plain
+                       @click="handleLoadingCheck(scope.$index, scope.row, 'sendingCheck')">派货确认
             </el-button>
           </template>
         </el-table-column>
       </el-table>
-    </div>
-    <div class="pagination-container">
-      <el-pagination
-          bacround
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          layout="total, sizes,prev, pager, next,jumper"
-          :current-page.sync="listQuery.pageNum"
-          :page-size="listQuery.pageSize"
-          :page-sizes="[5,10,15]"
-          :total="total">
-      </el-pagination>
     </div>
     <el-dialog
         title="取消运单"
@@ -120,15 +114,14 @@
 </template>
 <script>
 import qs from 'qs'
+import {toBase64} from 'js-base64';
 import {fetchOptions} from '@/api/sysEnum'
 import {fetchList} from '@/api/shipOrder'
 import {formatDate} from '@/utils/date';
 
 let start = new Date();
-start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+start.setTime(start.getTime() - 3600 * 1000 * 24 * 3);
 const defaultListQuery = {
-  pageNum: 1,
-  pageSize: 10,
   plateNumber: null,
   bucketNo: null,
   bucketId: null,
@@ -172,9 +165,10 @@ export default {
   },
   methods: {
     formatMoney(row, column, cellValue, index) {
-      if (cellValue !== null) {
-        return "￥" + cellValue;
-      }
+      if (!cellValue) return '￥0.00';
+      const parts = cellValue.toString().split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return '￥' + parts.join('.');
     },
     formatDate(row, column, cellValue, index) {
       let date = new Date(cellValue);
@@ -185,6 +179,7 @@ export default {
       return formatDate(date, 'yyyy-MM-dd hh:mm:ss')
     },
     formatOptionData(row, column, cellValue, index) {
+      if (!cellValue) return "";
       for (let item of this.optionMap[column.property.substr(column.property.indexOf('\.')+1)]) {
         if (item.enumCode == cellValue) {
           return item.enumValue;
@@ -202,35 +197,35 @@ export default {
       this.listQuery = Object.assign({}, defaultListQuery);
     },
     handleSearchList() {
-      this.listQuery.pageNum = 1;
-      this.listQuery.orderDateStart = this.listQuery.orderDate[0];
-      this.listQuery.orderDateEnd = this.listQuery.orderDate[1];
-      this.getList();
-    },
-    handleSizeChange(val) {
-      this.listQuery.pageNum = 1;
-      this.listQuery.pageSize = val;
-      this.getList();
-    },
-    handleCurrentChange(val) {
-      this.listQuery.pageNum = val;
+      if (this.listQuery.orderDate != null) {
+        this.listQuery.orderDateStart = this.listQuery.orderDate[0];
+        this.listQuery.orderDateEnd = this.listQuery.orderDate[1];
+      } else {
+        this.listQuery.orderDateStart = null;
+        this.listQuery.orderDateEnd = null;
+      }
       this.getList();
     },
     handleAdd() {
       this.$router.push({path: '/oms/addShipOrder'})
     },
     handleView(index, row) {
-      this.$router.push({path: '/oms/viewShipOrder', query: {id: row.id}});
+      let param = toBase64(JSON.stringify({id: row.id, action: 'view', maxState: row.maxState}));
+      this.$router.push({path: '/oms/viewShipOrder', query: {param}});
     },
     handleUpdate(index, row) {
-      this.$router.push({path: '/oms/updateShipOrder', query: {id: row.id}})
+      let param = toBase64(JSON.stringify({id: row.id, action: 'update', maxState: row.maxState}));
+      this.$router.push({path: '/oms/updateShipOrder', query: {param}})
+    },
+    handleLoadingCheck(index, row, action) {
+      let param = toBase64(JSON.stringify({id: row.id, action, maxState: row.maxState}));
+      this.$router.push({path: '/oms/updateShipOrder', query: {param}})
     },
     getList() {
       this.listLoading = true;
       fetchList(qs.stringify(this.listQuery, {indices: false})).then(response => {
         this.listLoading = false;
-        this.list = response.data.list;
-        this.total = response.data.total;
+        this.list = response.data;
       });
     },
     fetchOptions() {
@@ -248,7 +243,7 @@ export default {
       });
       fetchOptions({"enumType": "ORDER_STATE"}).then(response => {
         this.stateOptions = response.data;
-        this.optionMap["state"] = this.stateOptions;
+        this.optionMap["minState"] = this.stateOptions;
       });
       fetchOptions({"enumType": "PACKING_TYPE"}).then(response => {
         this.packingTypeOptions = response.data;
