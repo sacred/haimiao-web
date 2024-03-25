@@ -85,28 +85,32 @@
                 style="width: 100%;"
                 v-loading="listLoading" border>
         <el-table-column label="订单编号" prop="custOrderNo" width="180" align="center"></el-table-column>
-        <el-table-column label="内地客户" prop="localCust" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="香港客户" prop="hkCust" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="品类" prop="goodType" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="规格" prop="packingType" :formatter="formatOptionData" width="120" align="center"></el-table-column>
-        <el-table-column label="运费(元)" prop="freightFee" :formatter="formatMoney" width="120" align="center" sortable></el-table-column>
-        <el-table-column label="总件数" prop="totalNumber" width="120" align="center"></el-table-column>
-        <el-table-column label="总重量(Kg)" prop="totalWeight" width="120" align="center"></el-table-column>
+        <el-table-column label="内地客户" prop="localCust" :formatter="formatOptionData" align="center"></el-table-column>
+        <el-table-column label="香港客户" prop="hkCust" :formatter="formatOptionData" align="center"></el-table-column>
+        <el-table-column label="品类" prop="goodType" :formatter="formatOptionData" align="center"></el-table-column>
+        <el-table-column label="规格" prop="packingType" :formatter="formatOptionData" align="center"></el-table-column>
+        <el-table-column label="运费(元)" prop="freightFee" :formatter="formatMoney" align="center" sortable></el-table-column>
+        <el-table-column label="总件数" prop="totalNumber" align="center"></el-table-column>
+        <el-table-column label="总重量(Kg)" prop="totalWeight" align="center"></el-table-column>
         <el-table-column label="件数组成" align="center">
-          <el-table-column label="每件重量" prop="unitWeight" width="120" align="center"></el-table-column>
-          <el-table-column label="整件件数" prop="fclNumber" width="120" align="center"></el-table-column>
-          <el-table-column label="尾数1重量(Kg)" prop="additionWeight1" width="120" align="center"></el-table-column>
-          <el-table-column label="尾数2重量(Kg)" prop="additionWeight2" width="120" align="center"></el-table-column>
+          <el-table-column label="每件重量" prop="unitWeight" align="center"></el-table-column>
+          <el-table-column label="整件件数" prop="fclNumber" align="center"></el-table-column>
+          <el-table-column label="尾数1重量(Kg)" prop="additionWeight1" align="center"></el-table-column>
+          <el-table-column label="尾数2重量(Kg)" prop="additionWeight2" align="center"></el-table-column>
         </el-table-column>
         <el-table-column label="下单日期" prop="orderDate" :formatter="formatDate" width="120" align="center" sortable></el-table-column>
         <el-table-column label="提交时间" prop="createTime" :formatter="formatCreateTime" width="180" align="center"></el-table-column>
-        <el-table-column label="订单状态" prop="state" :formatter="formatOptionData" width="120" align="center"></el-table-column>
+        <el-table-column label="订单状态" prop="state" :formatter="formatOptionData" align="center"></el-table-column>
         <el-table-column label="备注" prop="remark" width="180" show-overflow-tooltip align="center"></el-table-column>
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column label="操作" width="260" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
                 size="mini"
                 @click="handleUpdate(scope.$index, scope.row)">编辑
+            </el-button>
+            <el-button
+                size="mini"
+                @click="handleCopy(scope.$index, scope.row)">复制
             </el-button>
             <el-button
                 size="mini"
@@ -153,6 +157,7 @@ import qs from 'qs'
 import {fetchOptions} from '@/api/sysEnum'
 import {cancelOrder, fetchList} from '@/api/custOrder'
 import {formatDate} from '@/utils/date';
+import {toBase64} from "js-base64";
 
 let start = new Date();
 start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
@@ -253,6 +258,11 @@ export default {
     },
     handleUpdate(index, row) {
       this.$router.push({path: '/oms/updateCustOrder', query: {id: row.id}})
+    },
+    handleCopy(index, row) {
+      console.log(JSON.stringify(row));
+      let param = toBase64(JSON.stringify(row));
+      this.$router.push({path: '/oms/addCustOrder', query: {param}})
     },
     getList() {
       this.listLoading = true;

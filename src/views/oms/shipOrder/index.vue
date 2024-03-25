@@ -41,6 +41,33 @@
               </el-option>
             </el-select>
           </el-form-item>
+          <el-form-item label="大陆客户：">
+            <el-select v-model="listQuery.localCust" clearable class="input-width" placeholder="请选择">
+              <el-option v-for="item in localCustOptions"
+                         :key="item.enumCode"
+                         :label="item.enumValue"
+                         :value="item.enumCode">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="香港客户：">
+            <el-select v-model="listQuery.hkCust" clearable class="input-width" placeholder="请选择">
+              <el-option v-for="item in hkCustOptions"
+                         :key="item.enumCode"
+                         :label="item.enumValue"
+                         :value="item.enumCode">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="品种：">
+            <el-select v-model="listQuery.goodType" clearable class="input-width" placeholder="请选择">
+              <el-option v-for="item in goodTypeOptions"
+                         :key="item.enumCode"
+                         :label="item.enumValue"
+                         :value="item.enumCode">
+              </el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item label="下单日期：">
             <el-date-picker
                 v-model="listQuery.orderDate"
@@ -120,7 +147,7 @@ import {fetchList} from '@/api/shipOrder'
 import {formatDate} from '@/utils/date';
 
 let start = new Date();
-start.setTime(start.getTime() - 3600 * 1000 * 24 * 3);
+start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
 const defaultListQuery = {
   plateNumber: null,
   bucketNo: null,

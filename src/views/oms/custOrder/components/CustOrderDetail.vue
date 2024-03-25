@@ -83,6 +83,7 @@
 import {fetchOptions} from '@/api/sysEnum'
 import {createCustOrder, updateCustOrder, getCustOrderInfo} from '@/api/custOrder'
 import {formatDate} from '@/utils/date';
+import {fromBase64} from "js-base64";
   const defaultCustOrder = {
     id: null,
     localCust: null,
@@ -149,6 +150,9 @@ import {formatDate} from '@/utils/date';
         getCustOrderInfo(this.$route.query.id).then(response=>{
           this.custOrder=response.data;
         });
+      } else {
+        let param = JSON.parse(fromBase64(this.$route.query.param));
+        this.custOrder = {...param};
       }
     },
     filters: {

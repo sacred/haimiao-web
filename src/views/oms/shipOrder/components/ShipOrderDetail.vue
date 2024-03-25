@@ -44,10 +44,10 @@
               <span>{{ goods.packingType + '【共' + goods.totalNumber + '件 ' + goods.totalWeight + 'Kg】' }}</span>
             </el-tooltip>
             <span style="float: right;">
-              <el-button v-if="actionType=='loadingCheck' || (actionType=='view' && goods.state>=3 && maxState<4)" @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)" type="success"
+              <el-button v-if="actionType=='loadingCheck' || goods.state>=3 && maxState<4" @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)" type="success"
                            :plain="goods.state>=3" :disabled="goods.state>=3" :icon="goods.state>=3?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
               <el-tooltip v-if="goods.sendingConfirmState==0" :content="goods.sendingConfirmNotes" placement="right" effect="light">
-                <el-button v-if="actionType=='sendingCheck' || (actionType=='view' && goods.state>=5)" @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)" :type="goods.sendingConfirmState==0?'danger':'primary'"
+                <el-button v-if="actionType=='sendingCheck' || goods.state>=5" @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)" :type="goods.sendingConfirmState==0?'danger':'primary'"
                                :plain="goods.state>=5 && goods.sendingConfirmState==1" :disabled="goods.state>=5" :icon="goods.state>=5?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
               </el-tooltip>
               <el-button v-if="goods.sendingConfirmState!=0 && (actionType=='sendingCheck' || (actionType=='view' && goods.state>=5))" @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)" :type="goods.sendingConfirmState==0?'danger':'primary'"
@@ -193,12 +193,15 @@ export default {
       });
     },
     handleDialogCancel(formName) {
-      this.$refs[formName].resetFields();
-      this.$refs[formName].clearValidate()
+      this.$nextTick(() => {
+        this.$refs[formName].resetFields();
+        this.$refs[formName].clearValidate();
+        this.unPackingGoods = null;
+      });
     },
     goBack() {
       this.$router.back();
-    },
+    }
   }
 }
 </script>

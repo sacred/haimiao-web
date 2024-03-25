@@ -37,6 +37,14 @@ export function updateShipOrder(params) {
   })
 }
 
+export function getUnLoadingGoodsInfo(params) {
+  return request({
+    url:'/loading/getUnLoadingGoods',
+    method:'post',
+    data: params
+  })
+}
+
 export function loadingConfirm(params) {
   return request({
     url:'/loading/confirm/loading',

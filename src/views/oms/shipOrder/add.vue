@@ -5,7 +5,8 @@
              label-width="200px"
              size="small">
       <el-form-item label="车牌号码：" prop="plateNumber" :rules="{required: true, message: '请选择车牌号码', trigger: 'change'}">
-        <el-select v-model="shipOrder.plateNumber" :disabled="editSatus>0" class="input-width" filterable placeholder="请选择">
+        <el-select v-model="shipOrder.plateNumber" :disabled="editSatus>0" class="input-width" filterable
+                   placeholder="请选择">
           <el-option v-for="item in plateNumberOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -14,7 +15,8 @@
         </el-select>
       </el-form-item>
       <el-form-item label="桶位：" prop="bucketNo" :rules="{required: true, message: '请选择装载的桶位', trigger: 'change'}">
-        <el-select v-model="shipOrder.bucketNo" :disabled="editSatus>0" class="input-width" filterable placeholder="请选择">
+        <el-select v-model="shipOrder.bucketNo" :disabled="editSatus>0" class="input-width" filterable
+                   placeholder="请选择">
           <el-option v-for="item in bucketOptions"
                      :key="item.enumCode"
                      :label="item.enumValue"
@@ -36,15 +38,15 @@
         <el-date-picker type="date" placeholder="选择日期" value-format="yyyy-MM-dd" v-model="shipOrder.loadingDate"
                         class="input-width"></el-date-picker>
       </el-form-item>
-<!--      <el-form-item label="备注：">-->
-<!--        <el-input-->
-<!--            class="input-width"-->
-<!--            type="textarea"-->
-<!--            :rows="5"-->
-<!--            placeholder="请输入内容"-->
-<!--            v-model="shipOrder.remark">-->
-<!--        </el-input>-->
-<!--      </el-form-item>-->
+      <!--      <el-form-item label="备注：">-->
+      <!--        <el-input-->
+      <!--            class="input-width"-->
+      <!--            type="textarea"-->
+      <!--            :rows="5"-->
+      <!--            placeholder="请输入内容"-->
+      <!--            v-model="shipOrder.remark">-->
+      <!--        </el-input>-->
+      <!--      </el-form-item>-->
       <el-table ref="bucketGoodsTable"
                 :data="shipOrder.goodsDetailList"
                 style="width: 100%;" border>
@@ -72,7 +74,7 @@
         </el-table-column>
       </el-table>
       <el-form-item style="padding-top: 20px">
-        <el-button type="primary" plain @click="handleAddGoodsDetail">添加货品</el-button>
+        <el-button type="primary" plain @click="handleAddGoodsDetail()">添加货品</el-button>
         <el-button :disabled="!isChange" type="primary" @click="onSubmit('shipOrderForm')"
                    :class="{ 'flash-btn': isFlashing }">提交
         </el-button>
@@ -126,6 +128,11 @@
         </el-form-item>
         <el-form-item label="整件数量：" prop="fclNumber">
           <el-input-number v-model.number="editOrder.fclNumber" :min="0" class="input-width"></el-input-number>
+          <el-tag v-if="unPackingGoods&&unPackingGoods.diffNumber!=0"
+                  :type="unPackingGoods.diffNumber>0? 'warnning':'danger'">
+            {{ (unPackingGoods.diffNumber>0?'剩余未配载'+ unPackingGoods.diffNumber + '件, ' + unPackingGoods.diffWeight + 'Kg'
+              :'实际配载超过客户下单'+ (-unPackingGoods.diffNumber) + '件, ' + (-unPackingGoods.diffWeight) + 'Kg') }}
+          </el-tag>
         </el-form-item>
         <el-form-item label="每件重量：" prop="unitWeight">
           <el-input v-model="editOrder.unitWeight" clearable class="input-width">
@@ -153,7 +160,7 @@
 <script>
 import {fromBase64} from 'js-base64'
 import {fetchOptions} from '@/api/sysEnum'
-import {getGoodsDetail, createShipOrder, updateShipOrder} from '@/api/shipOrder'
+import {createShipOrder, getGoodsDetail, getUnLoadingGoodsInfo, updateShipOrder} from '@/api/shipOrder'
 import {formatDate} from '@/utils/date';
 
 const defaultGoodsDetail = {
@@ -174,7 +181,7 @@ const defaultShipOrder = {
   bucketNo: null,
   exportCompany: null,
   plateNumber: null,
-  loadingDate: formatDate(new Date(), 'yyyy-MM-dd hh:mm:ss'),
+  loadingDate: formatDate(new Date(), 'yyyy-MM-dd'),
   goodsDetailList: []
 };
 export default {
@@ -194,6 +201,7 @@ export default {
       plateNumberOptions: [],
       exportCompanyOptions: [],
       bucketOptions: [],
+      unPackingGoods: null,
 
       rules: {
         localCust: [
@@ -226,6 +234,50 @@ export default {
       },
     }
   },
+  watch: {
+    editOrderNew: {
+      handler(newObj, oldObj) {
+        if (newObj.localCust && newObj.hkCust && newObj.goodType && newObj.packingType) {
+          let param = {
+            loadingDate: this.shipOrder.loadingDate,
+            localCust: newObj.localCust,
+            hkCust: newObj.hkCust,
+            goodType: newObj.goodType,
+            packingType: newObj.packingType
+          }
+          if (!this.unPackingGoods) {
+            getUnLoadingGoodsInfo(param).then(response => {
+              this.unPackingGoods = response.data;
+            })
+          }
+          if (this.unPackingGoods != null) {
+            this.unPackingGoods.diffNumber -= Number(newObj.fclNumber) - Number(oldObj.fclNumber);
+            this.unPackingGoods.diffWeight -= Number(newObj.fclNumber)*Number(newObj.unitWeight) - Number(oldObj.fclNumber)*Number(oldObj.unitWeight);
+
+            if ((oldObj.additionWeight1 == 0 || oldObj.additionWeight1 == '') && newObj.additionWeight1 != 0) {
+              this.unPackingGoods.diffNumber--;
+            } else if (oldObj.additionWeight1 != 0 && (newObj.additionWeight1 == 0 || newObj.additionWeight1 == '')) {
+              this.unPackingGoods.diffNumber++;
+            }
+            this.unPackingGoods.diffWeight -= Number(newObj.additionWeight1) - Number(oldObj.additionWeight1);
+            if ((oldObj.additionWeight2 == 0 || oldObj.additionWeight2 == '') && newObj.additionWeight2 != 0) {
+              this.unPackingGoods.diffNumber--;
+            } else if (oldObj.additionWeight2 != 0 && (newObj.additionWeight2 == 0 || newObj.additionWeight2 == '')) {
+              this.unPackingGoods.diffNumber++;
+            }
+            this.unPackingGoods.diffWeight -= Number(newObj.additionWeight2) - Number(oldObj.additionWeight2);
+          }
+        }
+      },
+      deep: true,
+      // immediate: true
+    }
+  },
+  computed: {
+    editOrderNew() {
+      return JSON.parse(JSON.stringify(this.editOrder));
+    },
+  },
   created() {
     this.getOptions();
     defaultShipOrder.goodsDetailList = [];
@@ -235,7 +287,7 @@ export default {
         this.editSatus = 2;
         getGoodsDetail(param.id).then(response => {
           this.shipOrder = response.data;
-          this.defaultShipOrder = Object.assign({}, response.data);
+          this.shipOrder.loadingDate = param.loadingDate;
         });
       } else {
         this.editSatus = 1;
@@ -258,17 +310,23 @@ export default {
       this.editOrder = Object.assign({}, row, {index: index, dialogVisible: true})
     },
     handleCopy(index, row) {
-      this.editOrder = Object.assign({}, row, {
+      let rowData = Object.assign({}, row, {
         index: this.shipOrder.goodsDetailList.length,
         dialogVisible: true,
         id: null,
-        state: 2
+        state: 2,
+        fclNumber: 0,
+        additionWeight1: 0,
+        additionWeight2: 0,
       })
+      this.editOrder = Object.assign({}, rowData);
     },
     handleAddGoodsDetail() {
+      this.unPackingGoods = null;
       this.editOrder = Object.assign({}, {...defaultGoodsDetail}, {
         index: this.shipOrder.goodsDetailList.length,
-        dialogVisible: true
+        dialogVisible: true,
+        state: 2
       })
     },
     handleDeleteGoodsDetail(index) {
@@ -287,8 +345,8 @@ export default {
       })
     },
     handleDialogCancel(formName) {
-      this.$refs[formName].resetFields();
       this.$refs[formName].clearValidate();
+      this.unPackingGoods = null;
     },
     handleDialogConfirm(formName) {
       this.$refs[formName].validate((valid) => {
