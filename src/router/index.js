@@ -202,11 +202,17 @@ export const asyncRouterMap = [
         hidden:true
       },
       {
-        path: 'orderDetail',
-        name: 'orderDetail',
-        component: () => import('@/views/oms/order/orderDetail'),
-        meta: {title: '订单详情'},
+        path: 'customsDeclaration',
+        name: 'customsDeclaration',
+        component: () => import('@/views/oms/customsDeclaration/index'),
+        meta: {title: '报关单'},
         hidden:true
+      },
+      {
+        path: 'settlement',
+        name: 'settlement',
+        component: () => import('@/views/oms/settlement/index'),
+        meta: {title: '结算账单', icon: 'sms-coupon'}
       },
       {
         path: 'deliverOrderList',

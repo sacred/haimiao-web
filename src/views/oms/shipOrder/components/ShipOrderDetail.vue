@@ -8,17 +8,22 @@
       <el-descriptions-item label="运输日期">{{ loadingInfo.loadingDate | formatDate }}</el-descriptions-item>
       <el-descriptions-item label="总重量">{{ loadingInfo.totalWeight }} Kg</el-descriptions-item>
       <el-descriptions-item label="总件数">{{ loadingInfo.totalNumber }} 件</el-descriptions-item>
-<!--      <el-descriptions-item label="运费">{{ loadingInfo.freightFee | formatMoney }}</el-descriptions-item>-->
+      <!--      <el-descriptions-item label="运费">{{ loadingInfo.freightFee | formatMoney }}</el-descriptions-item>-->
     </el-descriptions>
     <el-divider></el-divider>
     <el-descriptions title="桶位配载">
       <template slot="extra">
         按钮含义：
-        <el-button type="success" icon="el-icon-finished" circle size="mini"></el-button>待装货确定
-        <el-button type="success" icon="el-icon-check" circle size="mini" plain disabled></el-button>已装货确定
-        <el-button type="primary" icon="el-icon-finished" circle size="mini"></el-button>待派货确认
-        <el-button type="primary" icon="el-icon-check" circle size="mini" plain disabled></el-button>已派货签收
-        <el-button type="danger" icon="el-icon-check" circle size="mini" disabled></el-button>已派货签收(异常)
+        <el-button type="success" icon="el-icon-finished" circle size="mini"></el-button>
+        待装货确定
+        <el-button type="success" icon="el-icon-check" circle size="mini" plain disabled></el-button>
+        已装货确定
+        <el-button type="primary" icon="el-icon-finished" circle size="mini"></el-button>
+        待派货确认
+        <el-button type="primary" icon="el-icon-check" circle size="mini" plain disabled></el-button>
+        已派货签收
+        <el-button type="danger" icon="el-icon-check" circle size="mini" disabled></el-button>
+        已派货签收(异常)
       </template>
     </el-descriptions>
     <el-row :gutter="20" v-for="(row, rowIndex) in Math.ceil(bucketOptions.length / 3)"
@@ -44,14 +49,25 @@
               <span>{{ goods.packingType + '【共' + goods.totalNumber + '件 ' + goods.totalWeight + 'Kg】' }}</span>
             </el-tooltip>
             <span style="float: right;">
-              <el-button v-if="actionType=='loadingCheck' || goods.state>=3 && maxState<4" @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)" type="success"
-                           :plain="goods.state>=3" :disabled="goods.state>=3" :icon="goods.state>=3?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
-              <el-tooltip v-if="goods.sendingConfirmState==0" :content="goods.sendingConfirmNotes" placement="right" effect="light">
-                <el-button v-if="actionType=='sendingCheck' || goods.state>=5" @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)" :type="goods.sendingConfirmState==0?'danger':'primary'"
-                               :plain="goods.state>=5 && goods.sendingConfirmState==1" :disabled="goods.state>=5" :icon="goods.state>=5?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
+              <el-button v-if="actionType=='loadingCheck' || goods.state>=3 && maxState<4"
+                         @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)"
+                         type="success"
+                         :plain="goods.state>=3" :disabled="goods.state>=3"
+                         :icon="goods.state>=3?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
+              <el-tooltip v-if="goods.sendingConfirmState==0" :content="goods.sendingConfirmNotes" placement="right"
+                          effect="light">
+                <el-button v-if="actionType=='sendingCheck' || goods.state>=5"
+                           @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)"
+                           :type="goods.sendingConfirmState==0?'danger':'primary'"
+                           :plain="goods.state>=5 && goods.sendingConfirmState==1" :disabled="goods.state>=5"
+                           :icon="goods.state>=5?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
               </el-tooltip>
-              <el-button v-if="goods.sendingConfirmState!=0 && (actionType=='sendingCheck' || (actionType=='view' && goods.state>=5))" @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)" :type="goods.sendingConfirmState==0?'danger':'primary'"
-                         :plain="goods.state>=5 && goods.sendingConfirmState==1" :disabled="goods.state>=5" :icon="goods.state>=5?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
+              <el-button
+                  v-if="goods.sendingConfirmState!=0 && (actionType=='sendingCheck' || (actionType=='view' && goods.state>=5))"
+                  @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)"
+                  :type="goods.sendingConfirmState==0?'danger':'primary'"
+                  :plain="goods.state>=5 && goods.sendingConfirmState==1" :disabled="goods.state>=5"
+                  :icon="goods.state>=5?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
             </span>
           </div>
         </el-card>
@@ -59,15 +75,16 @@
     </el-row>
     <el-dialog title="确认货物信息" @close="handleDialogCancel('confirmForm')"
                :visible.sync="confirmOrder.dialogVisible" width="35%">
-      <el-form :model="confirmOrder" ref="confirmForm" label-width="80px" size="small">
+      <el-form :model="confirmOrder" :rules="rules" ref="confirmForm" label-width="80px" size="small">
         <el-form-item label="确认状态">
           <el-radio-group v-model="confirmOrder.state">
             <el-radio :label="1">确认无误</el-radio>
             <el-radio :label="0">异常情况</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注：" :prop="confirmOrder.state==0?'remark': ''" :rules="{required: true, message: '异常情况请填写备注', trigger: 'blur'}">
-          <el-input v-model="confirmOrder.remark" style="width: 80%" type="textarea" :rows="5" clearable placeholder="请输入内容">
+        <el-form-item label="备注：" prop="remark">
+          <el-input v-model="confirmOrder.remark" style="width: 80%" type="textarea" :rows="5" clearable
+                    placeholder="请输入内容">
           </el-input>
         </el-form-item>
       </el-form>
@@ -103,6 +120,19 @@ export default {
       maxState: null,
       bucketDetailList: [],
       confirmOrder: Object.assign({}, defaultConfirmOrder),
+
+      rules: {
+        remark: [{
+          required: true, message: '异常情况请填写备注', trigger: 'blur',
+          validator: (rule, value, callback) => {
+            if (this.confirmOrder.state == 0 && (!value || value.length == 0)) {
+              callback(new Error('异常情况请填写备注说明'));
+            } else {
+              callback();
+            }
+          }
+        }]
+      },
     }
   },
   filters: {
@@ -157,7 +187,7 @@ export default {
           this.bucketDetailList.forEach(function (item, index, array) {
             if (item.bucketNo == bucketNo) {
               let goodsDetailList = item.goodsDetailList;
-              goodsDetailList.forEach(function(goods) {
+              goodsDetailList.forEach(function (goods) {
                 if (goods.id == id) {
                   goods.state = 3;
                   return;
@@ -171,20 +201,31 @@ export default {
     },
     handleDialogConfirm(formName) {
       let param = {...this.confirmOrder};
-      sendingConfirm(param).then(response=> {
-        this.bucketDetailList.forEach(function (item, index, array) {
-          if (item.bucketNo == param.bucketNo) {
-            let goodsDetailList = item.goodsDetailList;
-            goodsDetailList.forEach(function(goods) {
-              if (goods.id == param.id) {
-                goods.state = 5;
-                return;
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          sendingConfirm(param).then(response => {
+            this.bucketDetailList.forEach(function (item, index, array) {
+              if (item.bucketNo == param.bucketNo) {
+                let goodsDetailList = item.goodsDetailList;
+                goodsDetailList.forEach(function (goods) {
+                  if (goods.id == param.id) {
+                    goods.state = 5;
+                    return;
+                  }
+                })
               }
             })
-          }
-        })
-        this.confirmOrder.dialogVisible = false;
-        this.$message({message: '派货签收成功', type: "success"});
+            this.confirmOrder.dialogVisible = false;
+            this.$message({message: '派货签收成功', type: "success"});
+          });
+        } else {
+          this.$message({
+            message: '验证失败',
+            type: 'error',
+            duration: 1000
+          });
+          return false;
+        }
       });
     },
     getOptions() {
@@ -236,6 +277,7 @@ export default {
   display: table;
   content: "";
 }
+
 .clearfix:after {
   clear: both
 }

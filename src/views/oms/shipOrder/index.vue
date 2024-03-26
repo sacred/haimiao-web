@@ -101,7 +101,7 @@
         <el-table-column label="下单日期" prop="loadingDate" :formatter="formatDate" width="120" align="center" sortable></el-table-column>
         <el-table-column label="提交时间" prop="createTime" :formatter="formatCreateTime" width="180" align="center"></el-table-column>
         <el-table-column label="运单状态" prop="minState" :formatter="formatOptionData" align="center"></el-table-column>
-        <el-table-column label="操作" width="260" align="center" fixed="right">
+        <el-table-column label="操作" width="200" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
                 size="mini"
@@ -113,6 +113,9 @@
             </el-button>
             <el-button size="mini" v-if="scope.row.minState==2" type="success" plain
                        @click="handleLoadingCheck(scope.$index, scope.row, 'loadingCheck')">装车确认
+            </el-button>
+            <el-button size="mini" v-if="scope.row.minState>=3" plain
+                       @click="handleCustomsDeclaration(scope.$index, scope.row, scope.row.minState)">{{scope.row.minState==3?'生成报关单':'查看报关单'}}
             </el-button>
             <el-button size="mini" v-if="scope.row.minState==3 || scope.row.minState==4" type="primary" plain
                        @click="handleLoadingCheck(scope.$index, scope.row, 'sendingCheck')">派货确认
@@ -143,7 +146,7 @@
 import qs from 'qs'
 import {toBase64} from 'js-base64';
 import {fetchOptions} from '@/api/sysEnum'
-import {fetchList} from '@/api/shipOrder'
+import {fetchList, generateCustomsDeclaration} from '@/api/shipOrder'
 import {formatDate} from '@/utils/date';
 
 let start = new Date();
@@ -248,6 +251,27 @@ export default {
       let param = toBase64(JSON.stringify({id: row.id, action, maxState: row.maxState}));
       this.$router.push({path: '/oms/updateShipOrder', query: {param}})
     },
+    handleCustomsDeclaration(index, row, state) {
+      if (state == 3) {
+        this.$confirm('生成报关单，将不可再进行装车配载操作，是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          generateCustomsDeclaration(row.id).then(response => {
+            this.$message({
+              type: 'success',
+              message: '操作成功!',
+              duration: 1000
+            });
+            this.$router.push({path: '/oms/customsDeclaration', query: {id: row.id}});
+          });
+        });
+      } else {
+        //state = 4
+        this.$router.push({path: '/oms/customsDeclaration', query: {id: row.id}});
+      }
+    },
     getList() {
       this.listLoading = true;
       fetchList(qs.stringify(this.listQuery, {indices: false})).then(response => {
@@ -311,6 +335,9 @@ export default {
 <style scoped>
 .input-width {
   width: 203px;
+}
+button {
+  margin: 5px 0; /* 上下间隔为5px */
 }
 </style>
 

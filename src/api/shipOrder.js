@@ -45,6 +45,20 @@ export function getUnLoadingGoodsInfo(params) {
   })
 }
 
+export function generateCustomsDeclaration(id) {
+  return request({
+    url:'/loading/genCustDeclaration/'+ id,
+    method:'post'
+  })
+}
+
+export function loadCustomsDeclaration(id) {
+  return request({
+    url:'/loading/getCustDeclarationInfo/'+ id,
+    method:'get'
+  })
+}
+
 export function loadingConfirm(params) {
   return request({
     url:'/loading/confirm/loading',
