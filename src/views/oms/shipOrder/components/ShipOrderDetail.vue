@@ -50,21 +50,21 @@
             </el-tooltip>
             <span style="float: right;">
               <el-button v-if="actionType=='loadingCheck' || goods.state>=3 && maxState<4"
-                         @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)"
+                         @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue, goods.goodType)"
                          type="success"
                          :plain="goods.state>=3" :disabled="goods.state>=3"
                          :icon="goods.state>=3?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
               <el-tooltip v-if="goods.sendingConfirmState==0" :content="goods.sendingConfirmNotes" placement="right"
                           effect="light">
                 <el-button v-if="actionType=='sendingCheck' || goods.state>=5"
-                           @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)"
+                           @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue, goods.goodType)"
                            :type="goods.sendingConfirmState==0?'danger':'primary'"
                            :plain="goods.state>=5 && goods.sendingConfirmState==1" :disabled="goods.state>=5"
                            :icon="goods.state>=5?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
               </el-tooltip>
               <el-button
                   v-if="goods.sendingConfirmState!=0 && (actionType=='sendingCheck' || (actionType=='view' && goods.state>=5))"
-                  @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue)"
+                  @click="handleLoadingCheck(goods.id, bucketOptions[rowIndex * 3 + colIndex].enumValue, goods.goodType)"
                   :type="goods.sendingConfirmState==0?'danger':'primary'"
                   :plain="goods.state>=5 && goods.sendingConfirmState==1" :disabled="goods.state>=5"
                   :icon="goods.state>=5?'el-icon-check':'el-icon-finished'" size="mini" circle></el-button>
@@ -104,6 +104,7 @@ import {formatDate} from '@/utils/date';
 const defaultConfirmOrder = {
   id: null,
   dialogVisible: false,
+  goodType: null,
   state: 1,
   bucketNo: null,
   remark: ''
@@ -176,10 +177,10 @@ export default {
       }));
       this.$router.push({path: '/oms/addShipOrder', query: {param}})
     },
-    handleLoadingCheck(id, bucketNo) {
+    handleLoadingCheck(id, bucketNo, goodType) {
       if (this.actionType == 'sendingCheck') {
         //派货签收需要确认框，可填写备注
-        this.confirmOrder = Object.assign({}, defaultConfirmOrder, {id, bucketNo, 'dialogVisible': true})
+        this.confirmOrder = Object.assign({}, defaultConfirmOrder, {id, bucketNo, goodType, 'dialogVisible': true})
       } else {
         //确认更新状态
         let param = {id: id, state: defaultConfirmOrder.state};
@@ -201,6 +202,9 @@ export default {
     },
     handleDialogConfirm(formName) {
       let param = {...this.confirmOrder};
+      if (param.goodType) {
+        param.remak = param.goodType + param.remak;
+      }
       this.$refs[formName].validate((valid) => {
         if (valid) {
           sendingConfirm(param).then(response => {

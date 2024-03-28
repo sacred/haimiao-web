@@ -74,3 +74,19 @@ export function sendingConfirm(params) {
     params: params
   })
 }
+
+export function getCustSettlement(params) {
+  return request({
+    url:'/loading/settlement/cust',
+    method:'post',
+    data: params
+  })
+}
+
+export function getVechileSettlement(params) {
+  return request({
+    url:'/loading/settlement/vechile',
+    method:'post',
+    data: params
+  })
+}
