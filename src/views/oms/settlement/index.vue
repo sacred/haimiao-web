@@ -44,6 +44,7 @@
           </el-form-item>
           <el-form-item label="下单日期：">
             <el-date-picker class="input-width"
+                            :clearable="false"
                 v-model="listQuery.orderDate"
                 value-format="yyyy-MM-dd"
                 type="daterange"
