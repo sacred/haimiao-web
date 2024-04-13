@@ -84,12 +84,42 @@
                 :data="list"
                 style="width: 100%;"
                 v-loading="listLoading" border>
-        <el-table-column label="订单编号" prop="custOrderNo" width="180" align="center"></el-table-column>
-        <el-table-column label="内地客户" prop="localCust" :formatter="formatOptionData" align="center"></el-table-column>
-        <el-table-column label="香港客户" prop="hkCust" :formatter="formatOptionData" align="center"></el-table-column>
-        <el-table-column label="品类" prop="goodType" :formatter="formatOptionData" align="center"></el-table-column>
-        <el-table-column label="规格" prop="packingType" :formatter="formatOptionData" align="center"></el-table-column>
-        <el-table-column label="运费(元)" prop="freightFee" :formatter="formatMoney" align="center" sortable></el-table-column>
+        <el-table-column label="订单编号" prop="custOrderNo" width="180" align="center">
+          <template slot-scope="scope">
+            <del v-if="scope.row.state==0">{{ scope.row.custOrderNo }}</del>
+            <span v-if="scope.row.state>0">{{ scope.row.custOrderNo }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="内地客户" prop="localCust" align="center">
+          <template slot-scope="scope">
+            <del v-if="scope.row.state==0">{{ scope.row.localCust }}</del>
+            <span v-if="scope.row.state>0">{{ scope.row.localCust }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="香港客户" prop="hkCust" align="center">
+          <template slot-scope="scope">
+            <del v-if="scope.row.state==0">{{ scope.row.hkCust }}</del>
+            <span v-if="scope.row.state>0">{{ scope.row.hkCust }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="品类" prop="goodType" align="center">
+          <template slot-scope="scope">
+            <del v-if="scope.row.state==0">{{ scope.row.goodType }}</del>
+            <span v-if="scope.row.state>0">{{ scope.row.goodType }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="规格" prop="packingType" align="center">
+          <template slot-scope="scope">
+            <del v-if="scope.row.state==0">{{ scope.row.packingType }}</del>
+            <span v-if="scope.row.state>0">{{ scope.row.packingType }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="运费(元)" prop="freightFee" :formatter="formatMoney" align="center" sortable>
+          <template slot-scope="scope">
+            <del v-if="scope.row.state==0">{{ scope.row.freightFee|formatMoney }}</del>
+            <span v-if="scope.row.state>0">{{ scope.row.freightFee|formatMoney }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="总件数" prop="totalNumber" align="center"></el-table-column>
         <el-table-column label="总重量(Kg)" prop="totalWeight" align="center"></el-table-column>
         <el-table-column label="件数组成" align="center">
@@ -104,7 +134,7 @@
         <el-table-column label="备注" prop="remark" width="180" show-overflow-tooltip align="center"></el-table-column>
         <el-table-column label="操作" width="260" align="center" fixed="right">
           <template slot-scope="scope">
-            <el-button
+            <el-button v-if="scope.row.state!=0"
                 size="mini"
                 @click="handleUpdate(scope.$index, scope.row)">编辑
             </el-button>
@@ -183,7 +213,7 @@ export default {
       operateType: null,
       cancelOrder: {
         dialogVisible: false,
-        content: null,
+        remark: null,
         id: null
       },
       stateOptions: [],
@@ -201,6 +231,14 @@ export default {
   },
   beforeDestroy() {
     document.removeEventListener('keydown', this.handleKeyDown);
+  },
+  filters: {
+    formatMoney(cellValue) {
+      if (!cellValue) return '￥0.00';
+      const parts = cellValue.toString().split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return '￥' + parts.join('.');
+    },
   },
   methods: {
     formatMoney(row, column, cellValue, index) {
@@ -254,15 +292,15 @@ export default {
       this.getList();
     },
     handleAdd() {
-      this.$router.push({path: '/oms/addCustOrder'})
+      this.$router.push({path: '/custorder/addCustOrder'})
     },
     handleUpdate(index, row) {
-      this.$router.push({path: '/oms/updateCustOrder', query: {id: row.id}})
+      this.$router.push({path: '/custorder/updateCustOrder', query: {id: row.id}})
     },
     handleCopy(index, row) {
       console.log(JSON.stringify(row));
       let param = toBase64(JSON.stringify(row));
-      this.$router.push({path: '/oms/addCustOrder', query: {param}})
+      this.$router.push({path: '/custorder/addCustOrder', query: {param}})
     },
     getList() {
       this.listLoading = true;
@@ -295,7 +333,7 @@ export default {
       });
     },
     handleCacnelOrderConfirm() {
-      if (this.cancelOrder.content == null || this.cancelOrder.content === '') {
+      if (this.cancelOrder.remark == null || this.cancelOrder.remark === '') {
         this.$message({
           message: '操作备注不能为空',
           type: 'warning',
