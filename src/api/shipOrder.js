@@ -90,3 +90,20 @@ export function getVechileSettlement(params) {
     data: params
   })
 }
+
+export function getCurrSummary(params) {
+  return request({
+    url:'/loading/summary/goods',
+    method:'post',
+    params: params
+  })
+}
+
+export function getLastWeekSummary(params) {
+  return request({
+    url:'/loading/summary/week',
+    method:'post',
+    params: params
+  })
+}
+
