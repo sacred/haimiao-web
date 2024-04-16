@@ -45,6 +45,12 @@
         <el-table-column label="姓名" align="center">
           <template slot-scope="scope">{{scope.row.nickName}}</template>
         </el-table-column>
+        <el-table-column label="类型" align="center">
+          <template slot-scope="scope">{{scope.row.userType | formatUserType}}</template>
+        </el-table-column>
+        <el-table-column label="关联信息" align="center">
+          <template slot-scope="scope">{{scope.row.extendRel}}</template>
+        </el-table-column>
         <el-table-column label="邮箱" align="center">
           <template slot-scope="scope">{{scope.row.email}}</template>
         </el-table-column>
@@ -108,6 +114,29 @@
         <el-form-item label="姓名：">
           <el-input v-model="admin.nickName" style="width: 250px"></el-input>
         </el-form-item>
+        <el-form-item label="类型：">
+          <el-select v-model="admin.userType" class="input-width" placeholder="全部" style="width: 250px">
+            <el-option v-for="item in userTypeOptions"
+                       :key="parseInt(item.enumCode)"
+                       :label="item.enumValue"
+                       :value="parseInt(item.enumCode)">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="admin.userType > 1" :label="admin.userType==2 ?'关联客户':'关联司机'">
+          <el-select v-model="admin.extendRel" class="input-width" placeholder="全部" style="width: 250px" :clearable="true">
+            <el-option v-if="admin.userType==2" v-for="item in localCustOptions"
+                       :key="item.enumCode"
+                       :label="item.enumValue"
+                       :value="item.enumCode">
+            </el-option>
+            <el-option v-if="admin.userType==3" v-for="item in plateNumberOptions"
+                       :key="item.enumCode"
+                       :label="item.enumValue"
+                       :value="item.enumCode">
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="邮箱：">
           <el-input v-model="admin.email" style="width: 250px"></el-input>
         </el-form-item>
@@ -155,6 +184,7 @@
   import {fetchList,createAdmin,updateAdmin,updateStatus,deleteAdmin,getRoleByAdmin,allocRole} from '@/api/login';
   import {fetchAllRoleList} from '@/api/role';
   import {formatDate} from '@/utils/date';
+  import {fetchOptions} from '@/api/sysEnum'
 
   const defaultListQuery = {
     pageNum: 1,
@@ -168,7 +198,9 @@
     nickName: null,
     email: null,
     note: null,
-    status: 1
+    status: 1,
+    userType: 1,
+    extendRel: null
   };
   export default {
     name: 'adminList',
@@ -184,10 +216,14 @@
         allocDialogVisible: false,
         allocRoleIds:[],
         allRoleList:[],
-        allocAdminId:null
+        allocAdminId:null,
+        userTypeOptions: [],
+        localCustOptions: [],
+        plateNumberOptions: [],
       }
     },
     created() {
+      this.fetchOptions(),
       this.getList();
       this.getAllRoleList();
     },
@@ -198,9 +234,28 @@
         }
         let date = new Date(time);
         return formatDate(date, 'yyyy-MM-dd hh:mm:ss')
-      }
+      },
+      formatUserType(value) {
+        if (value == 2) {
+          return "客户"
+        } else if (value == 3) {
+          return "司机"
+        }
+        return "员工"
+      },
     },
     methods: {
+      fetchOptions() {
+        fetchOptions({"enumType": "USER_TYPE"}).then(response => {
+          this.userTypeOptions = response.data;
+        });
+        fetchOptions({"enumType": "PLATE_NUMBER"}).then(response => {
+          this.plateNumberOptions = response.data;
+        });
+        fetchOptions({"enumType": "LOCAL_CUST"}).then(response => {
+          this.localCustOptions = response.data;
+        });
+      },
       handleResetSearch() {
         this.listQuery = Object.assign({}, defaultListQuery);
       },
