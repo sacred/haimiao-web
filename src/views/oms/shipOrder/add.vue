@@ -128,10 +128,10 @@
         </el-form-item>
         <el-form-item label="整件数量：" prop="fclNumber">
           <el-input-number v-model.number="editOrder.fclNumber" :min="0" class="input-width"></el-input-number>
-          <el-tag v-if="unPackingGoods&&unPackingGoods.diffNumber!=0"
+          <el-tag v-if="unPackingGoods&&(unPackingGoods.diffNumber!=0||unPackingGoods.diffWeight!=0) "
                   :type="unPackingGoods.diffNumber>0? 'warnning':'danger'">
             {{ (unPackingGoods.diffNumber>0?'剩余未配载'+ unPackingGoods.diffNumber + '件, ' + unPackingGoods.diffWeight + 'Kg'
-              :'实际配载超过客户下单'+ (-unPackingGoods.diffNumber) + '件, ' + (-unPackingGoods.diffWeight) + 'Kg') }}
+              :'实际配载超过客户下单'+ (-unPackingGoods.diffNumber) + '件, 超过' + (-unPackingGoods.diffWeight) + 'Kg') }}
           </el-tag>
         </el-form-item>
         <el-form-item label="每件重量：" prop="unitWeight">
@@ -174,7 +174,11 @@ const defaultGoodsDetail = {
   unitWeight: 10,
   additionWeight1: 0,
   additionWeight2: 0,
-  remark: null
+  remark: null,
+  oldFclNumber: 0,
+  oldUnitWeight: 10,
+  oldAdditionWeight1: 0,
+  oldAdditionWeight2: 0,
 };
 const defaultShipOrder = {
   orderLoadingId: null,
@@ -202,6 +206,7 @@ export default {
       exportCompanyOptions: [],
       bucketOptions: [],
       unPackingGoods: null,
+      oldGoodsDetailList: [],
 
       rules: {
         localCust: [
@@ -245,32 +250,78 @@ export default {
             goodType: newObj.goodType,
             packingType: newObj.packingType
           }
-          if (!this.unPackingGoods) {
-            getUnLoadingGoodsInfo(param).then(response => {
-              this.unPackingGoods = response.data;
+          getUnLoadingGoodsInfo(param).then(response => {
+            this.unPackingGoods = response.data;
+            //处理已在数据库中存在的数据，进行临时删除的处理(数据库中存在，列表中删除，需要将数据加回来)
+            let newIdList = this.shipOrder.goodsDetailList.map(o => o.id);
+            this.oldGoodsDetailList.forEach(o => {
+              if (o.localCust == param.localCust && o.hkCust == param.hkCust && o.goodType == param.goodType && o.packingType == param.packingType) {
+                if (!newIdList.includes(o.id)) {
+                  this.unPackingGoods.diffWeight += this.toFloat(o.oldFclNumber) * this.toFloat(o.oldUnitWeight);
+                  this.unPackingGoods.diffNumber += o.oldFclNumber;
+                  if (this.toFloat(o.oldAdditionWeight1 > 0)) {
+                    this.unPackingGoods.diffWeight += this.toFloat(o.oldAdditionWeight1);
+                    this.unPackingGoods.diffNumber++;
+                  }
+                  if (this.toFloat(o.oldAdditionWeight2 > 0)) {
+                    this.unPackingGoods.diffWeight += this.toFloat(o.oldAdditionWeight2);
+                    this.unPackingGoods.diffNumber++;
+                  }
+                }
+              }
             })
-          }
-          if (this.unPackingGoods != null) {
-            this.unPackingGoods.diffNumber -= Number(newObj.fclNumber) - Number(oldObj.fclNumber);
-            this.unPackingGoods.diffWeight -= Number(newObj.fclNumber)*Number(newObj.unitWeight) - Number(oldObj.fclNumber)*Number(oldObj.unitWeight);
+            this.shipOrder.goodsDetailList.forEach((o,idx)=>{
+              if (o.localCust == param.localCust && o.hkCust == param.hkCust && o.goodType == param.goodType && o.packingType == param.packingType) {
+                //数据库的数据更改了(old字段为数据库数据)
+                //1. 处理临时列表数据(非当前行，当前行由第2步计算，以免重复！！！)
+                if (idx != newObj.index) {
+                  this.unPackingGoods.diffNumber -= this.toFloat(o.fclNumber) - this.toFloat(o.oldFclNumber);
+                  if (this.toFloat(o.additionWeight1) > 0 && this.toFloat(o.oldAdditionWeight1) == 0) {
+                    this.unPackingGoods.diffNumber--;
+                  } else if (this.toFloat(o.additionWeight1) == 0 && this.toFloat(o.oldAdditionWeight1) > 0) {
+                    this.unPackingGoods.diffNumber++;
+                  }
+                  if (this.toFloat(o.additionWeight2) > 0 && this.toFloat(o.oldAdditionWeight2) == 0) {
+                    this.unPackingGoods.diffNumber--;
+                  } else if (this.toFloat(o.additionWeight2) == 0 && this.toFloat(o.oldAdditionWeight2) > 0) {
+                    this.unPackingGoods.diffNumber++;
+                  }
+                  this.unPackingGoods.diffWeight -= this.toFloat(o.fclNumber) * this.toFloat(o.unitWeight) - this.toFloat(o.oldFclNumber) * this.toFloat(o.oldUnitWeight);
+                  if (this.toFloat(o.additionWeight1) != this.toFloat(o.oldAdditionWeight1)) {
+                    this.unPackingGoods.diffWeight -= this.toFloat(o.additionWeight1) - this.toFloat(o.oldAdditionWeight1);
+                  }
+                  if (this.toFloat(o.additionWeight2) != this.toFloat(o.oldAdditionWeight2)) {
+                    this.unPackingGoods.diffWeight -= this.toFloat(o.additionWeight2) - this.toFloat(o.oldAdditionWeight2);
+                  }
+                }
 
-            if ((oldObj.additionWeight1 == 0 || oldObj.additionWeight1 == '') && newObj.additionWeight1 != 0) {
+              }
+            })
+            //2. 处理当前行数据
+            this.unPackingGoods.diffNumber -= this.toFloat(newObj.fclNumber) - this.toFloat(newObj.oldFclNumber);
+            if (this.toFloat(newObj.additionWeight1) > 0 && this.toFloat(newObj.oldAdditionWeight1) == 0) {
               this.unPackingGoods.diffNumber--;
-            } else if (oldObj.additionWeight1 != 0 && (newObj.additionWeight1 == 0 || newObj.additionWeight1 == '')) {
+            } else if (this.toFloat(newObj.additionWeight1) == 0 && this.toFloat(newObj.oldAdditionWeight1) > 0) {
               this.unPackingGoods.diffNumber++;
             }
-            this.unPackingGoods.diffWeight -= Number(newObj.additionWeight1) - Number(oldObj.additionWeight1);
-            if ((oldObj.additionWeight2 == 0 || oldObj.additionWeight2 == '') && newObj.additionWeight2 != 0) {
+            if (this.toFloat(newObj.additionWeight2) > 0 && this.toFloat(newObj.oldAdditionWeight2) == 0) {
               this.unPackingGoods.diffNumber--;
-            } else if (oldObj.additionWeight2 != 0 && (newObj.additionWeight2 == 0 || newObj.additionWeight2 == '')) {
+            } else if (this.toFloat(newObj.additionWeight2) == 0 && this.toFloat(newObj.oldAdditionWeight2) > 0) {
               this.unPackingGoods.diffNumber++;
             }
-            this.unPackingGoods.diffWeight -= Number(newObj.additionWeight2) - Number(oldObj.additionWeight2);
-          }
+            this.unPackingGoods.diffWeight -= this.toFloat(newObj.fclNumber) * this.toFloat(newObj.unitWeight) - this.toFloat(newObj.oldFclNumber) * this.toFloat(newObj.oldUnitWeight);
+            if (this.toFloat(newObj.additionWeight1) != this.toFloat(newObj.oldAdditionWeight1)) {
+              this.unPackingGoods.diffWeight -= this.toFloat(newObj.additionWeight1) - this.toFloat(newObj.oldAdditionWeight1);
+            }
+            if (this.toFloat(newObj.additionWeight2) != this.toFloat(newObj.oldAdditionWeight2)) {
+              this.unPackingGoods.diffWeight -= this.toFloat(newObj.additionWeight2) - this.toFloat(newObj.oldAdditionWeight2);
+            }
+            console.log(this.unPackingGoods.diffNumber+'-'+this.unPackingGoods.diffWeight)
+          })
         }
       },
       deep: true,
-      // immediate: true
+      immediate: true
     }
   },
   computed: {
@@ -287,6 +338,13 @@ export default {
         this.editSatus = 2;
         getGoodsDetail(param.id).then(response => {
           this.shipOrder = response.data;
+          this.shipOrder.goodsDetailList.forEach(o=>{
+            o.oldAdditionWeight1 = o.additionWeight1;
+            o.oldAdditionWeight2 = o.additionWeight2;
+            o.oldFclNumber = o.fclNumber;
+            o.oldUnitWeight = o.unitWeight;
+          });
+          this.oldGoodsDetailList = JSON.parse(JSON.stringify(this.shipOrder.goodsDetailList));
           this.shipOrder.loadingDate = param.loadingDate;
         });
       } else {
@@ -318,6 +376,9 @@ export default {
         fclNumber: 0,
         additionWeight1: 0,
         additionWeight2: 0,
+        oldFclNumber: 0,
+        oldAdditionWeight1: 0,
+        oldAdditionWeight2: 0,
       })
       this.editOrder = Object.assign({}, rowData);
     },
@@ -439,6 +500,10 @@ export default {
       fetchOptions({"enumType": "EXPORT_COMPANY"}).then(response => {
         this.exportCompanyOptions = response.data;
       });
+    },
+    toFloat(value, defaultValue = 0) {
+      const intValue = parseFloat(value);
+      return isNaN(intValue) ? defaultValue : intValue;
     },
     goBack() {
       this.$router.back();
